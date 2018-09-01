@@ -1,0 +1,15 @@
+{
+	"water" : 26,
+	"light" : 13,
+	"fan" : 19,
+	"fan_speed" : 21,
+	"dht22_1" : 16,
+	"dht22_2" : 20,
+	"dht22_max_temp_delta": 20,
+	"dht22_max_hum_delta": 30,
+	"moist_adc_ch_1" : 2,
+	"moist_adc_ch_2" : 3,
+	"moist_min" : 3400,
+	"moist_max" : 26700,
+	"moist_max_delta": 30
+}

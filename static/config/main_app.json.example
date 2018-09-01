@@ -1,0 +1,8 @@
+{
+	"ssl_certs": [
+		"path/certs/fullchain.pem", 
+		"path/certs/privkey.pem"
+	],
+	
+	"session_key": "314159265358979323846"
+}

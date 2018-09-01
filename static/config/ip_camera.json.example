@@ -1,0 +1,6 @@
+{
+	"usr" : "user",
+	"pwd" : "password",
+	"ip" : "192.168.1.42",
+	"snapshot_dir" : "static/photos/"
+}

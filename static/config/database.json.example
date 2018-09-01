@@ -1,0 +1,6 @@
+{
+	"user": "username",
+	"password": "password",
+	"database": "greenhouse",
+	"autocommit": true
+}

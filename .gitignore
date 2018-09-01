@@ -1,0 +1,10 @@
+__pycache__/
+letsencrypt/
+homebridge/
+*.log
+hw_test.py
+certs/
+photos/
+ip_camera.json
+database.json
+main_app.json

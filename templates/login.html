@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block body %}
+	<body>
+		<section class="container-fluid text-center p-5 colored-section my-5">
+			<h1>Login</h1>
+			{% if session.logged_in %}
+				<p id="label">You are already logged in</p>
+				<p><a href="{{ url_for('web_interface.index') }}">Go back to index</a></p>
+				<p><a href="{{ url_for('web_interface.logout') }}">Logout</a></p>
+			{% else %}
+				<p id="label">Type your credentials</p>
+				<form method="post" action="#">
+					<p><input type="text" id="user" value="" placeholder="Username"></p>
+					<p><input type="password" id="password" value="" placeholder="Password"></p>
+					<p><input type="button" id="commit" value="Login"></p>
+				</form>
+			{% endif %}
+		</section>
+		
+		<script type="text/javascript" src="{{ url_for('static', filename='js/login.js') }}"></script>
+	</body>
+		
+		
+{% endblock %}

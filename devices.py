@@ -8,6 +8,7 @@ from threading import Timer
 from dateutil import tz
 import datetime
 import subprocess
+import threading
 
 
 class Switch:
@@ -120,19 +121,18 @@ class IP_Camera:
 		self.snapshot_dir = snapshot_dir
 		self.interval = interval
 		self.timer = TimerWrap()
+		self.last_returncode = None
 
 	def take_snapshot(self):
 		filename = self.snapshot_dir+get_now().strftime("%Y-%m-%d_%H-%M-%S")+'.jpg'
 		cmd = 'ffmpeg -y -rtsp_transport tcp -i "rtsp://'+self.usr+':'+self.pwd+'@'+self.ip+'/11" -frames 1 '+filename
-		sub = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		rc = sub.returncode
-		if rc:
-			raise RuntimeWarning('Failed to take a camera snapshot, ip should be {}, return code was {}'.format(self.ip, rc))
-
+		t = threading.Thread(target=self.call_ffmpeg, args=(cmd,))
+		t.start()
 		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
-
-		return rc
-
+		
+	def call_ffmpeg(self, cmd):
+		sub = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		self.last_returncode = sub.returncode
 
 
 class TimerWrap:

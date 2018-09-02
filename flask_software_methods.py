@@ -130,14 +130,14 @@ def get_costs():
 @software_methods.route('/getAccessLog')
 def get_access_log():
 	if isAdmin():
-		return fread('static/log/access.log')
+		return fread('static/log/flask_access.log')
 	else:
 		abort(403)
 
 @software_methods.route('/getErrorLog')
 def get_error_log():
 	if isAdmin():
-		return fread('static/log/error.log')
+		return fread('static/log/flask_error.log')
 	else:
 		abort(403)
 

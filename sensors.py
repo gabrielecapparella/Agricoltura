@@ -15,6 +15,8 @@ from shutil import copyfile
 import requests
 from dateutil import tz
 import devices
+from queue import Queue
+import threading
 
 
 class Lightbulb(devices.Switch):
@@ -185,7 +187,7 @@ class Sensors:
 
 	def start(self):
 		self.logger.info("Initiating...")
-		self.restart()
+		self.cycle()
 		self.camera.take_snapshot()
 
 
@@ -231,14 +233,30 @@ class Sensors:
 		h -= dl
 
 		h -= self.get_lh_provided(self.get_now().date())
-		return h
+		return h			
+			
+	def sensor_read_wrapper(self, sensor, queue):
+		queue.put(sensor.read())
 
 	def read_sensors(self):
 		self.logger.debug("Reading sensors...")
-				
-		m_min, m_max, m_avg, m_good = 101, -1, 0, 0
+		threads, q_moist, q_th = [], Queue(), Queue()
+		
 		for sensor in self.moist_sensors:
-			reading = sensor.read()
+			t = threading.Thread(target=self.sensor_read_wrapper, args=(sensor, q_moist))
+			threads.append(t)
+			t.start()
+			
+		for sensor in self.temp_hum_sensors:
+			t = threading.Thread(target=self.sensor_read_wrapper, args=(sensor, q_th))
+			threads.append(t)
+			t.start()
+			
+		for t in threads: t.join()
+							
+		m_min, m_max, m_avg, m_good = 101, -1, 0, 0
+		while not q_moist.empty():
+			reading = q_moist.get()
 			if reading is not None:
 				if reading<m_min: m_min = reading
 				if reading>m_max: m_max = reading
@@ -251,8 +269,8 @@ class Sensors:
 				self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(m_min, m_max))
 
 		th_min, th_max, th_avg, th_good = [100,101], [-274,-1], [0,0], [0,0]
-		for sensor in self.temp_hum_sensors:
-			reading = sensor.read()
+		while not q_th.empty():
+			reading = q_th.get()
 			if reading[0] is not None:
 				if reading[0]<th_min[0]: th_min[0] = reading[0]
 				if reading[0]>th_max[0]: th_max[0] = reading[0]

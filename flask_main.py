@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
 from flask import Flask, render_template, request
-import web_interface
-import software_methods
-import hardware_methods
+import flask_web_interface
+import flask_software_methods
+import flask_hardware_methods
 import db_utils
 import sensors
 import signal
@@ -87,9 +87,9 @@ if __name__ == '__main__':
 			master.homebridge = subprocess.Popen('homebridge', stdout=subprocess.DEVNULL, stderr=hb_log)
 		
 		master.db = db_utils.DB_Connection()
-		master.register_blueprint(web_interface.web_interface)
-		master.register_blueprint(software_methods.software_methods, url_prefix='/methods')
-		master.register_blueprint(hardware_methods.hardware_methods, url_prefix='/methods')
+		master.register_blueprint(flask_web_interface.web_interface)
+		master.register_blueprint(flask_software_methods.software_methods, url_prefix='/methods')
+		master.register_blueprint(flask_hardware_methods.hardware_methods, url_prefix='/methods')
 		
 		master.secret_key = cfg["session_key"]
 		

@@ -2,7 +2,7 @@
 
 from flask import current_app, Blueprint, jsonify, abort, request, session
 import datetime
-from software_methods import isAuthorized, isAdmin, datetime_tz, fread
+from flask_software_methods import isAuthorized, isAdmin, datetime_tz, fread
 import re
 import json
 import os

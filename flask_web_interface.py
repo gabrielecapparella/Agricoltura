@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from flask import current_app, Blueprint, redirect, url_for, render_template, session, abort, send_file
-from software_methods import isAuthorized, isAdmin
+from flask_software_methods import isAuthorized, isAdmin
 import time
 import os
 

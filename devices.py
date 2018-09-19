@@ -2,20 +2,18 @@
 
 import RPi.GPIO as GPIO
 import Adafruit_DHT
-import Adafruit_ADS1x15
 import time
-from threading import Timer
-from dateutil import tz
-import datetime
 import subprocess
 import threading
-
+import sensors_utils
+import os
 
 class Switch:
-	def __init__(self, pin):
+	def __init__(self, pin, wattage):
 		self.pin = pin #BCM
 		self.state = False
 		self.active_since = None
+		self.wattage = wattage
 
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(pin, GPIO.OUT)
@@ -24,39 +22,60 @@ class Switch:
 	def get_state(self):
 		return self.state
 
+	def set_state(self, target=True):
+		if target: return self.on()
+		else: return self.off()
+
 	def on(self):
 		if self.state: return False
-
 		GPIO.output(self.pin, False)
 		self.state = True
-		self.active_since = unix_now()
-		return True
+		self.active_since = sensors_utils.unix_now()
+		return 0
 
 	def off(self):
-		if not self.state: return 0
+		if not self.state: return False
 		GPIO.output(self.pin, True)
 		self.state = False
-		self.active_since = None
-		return unix_now()
+		return self.active_since
 
-
-class Pump(Switch):
-	def __init__(self, pin):
-		super().__init__(pin)
-		self.timer = TimerWrap()
+class Irrigation(Switch):
+	def __init__(self, pin, wattage, flow, wt=1, st=10):
+		super().__init__(pin, wattage)
+		self.watering_state = 0 #0:inactive, 1:watering, 2:propagating
+		self.water_time = wt
+		self.spread_time = st
+		self.flow = flow
+		self.timer = sensors_utils.TimerWrap()
 
 	def get_state(self):
-		return [self.state, self.timer.remaining()]
+		return [self.state, self.timer.remaining(), self.watering_state]
 
-	def on(self, seconds=-1):
-		if seconds>0: self.timer.start(seconds, self.off)
-		return super().on()
+	def set_state(self, target=True, w_state=0):
+		self.watering_state = w_state
+		if target: return super().on()
+		else:
+			if w_state==0: self.timer.reset()
+			return super().off()
 
+	def water_cycle(self):
+		ws = self.watering_state
+		if ws==0:
+			print("[Irrigation.water_cycle]: water on.")
+			self.set_state(True, 1)
+			self.timer.start(self.water_time*60, self.water_cycle)
+		elif ws==1:
+			print("[Irrigation.water_cycle]: water off.")
+			self.set_state(False, 2)
+			self.timer.start(self.spread_time*60, self.water_cycle)	#wait while it spreads
+		elif ws==2:
+			print("[Irrigation.water_cycle]: cycle finished.")
+			self.set_state(False, 0)
 
 class Fan(Switch):
-	def __init__(self, power_pin, speed_pin, frequency=25000, default_speed=100.0):
-		super().__init__(power_pin)
-		self.speed = default_speed
+	def __init__(self, power_pin, speed_pin, wattage, frequency=25000):
+		super().__init__(power_pin, wattage)
+		self.speed = 100
 
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(speed_pin, GPIO.OUT)
@@ -65,14 +84,23 @@ class Fan(Switch):
 	def get_state(self):
 		return [self.state, self.speed]
 
+	def set_state(self, target=True, new_speed=None):
+		if new_speed==None: new_speed = self.speed
+
+		self.speed = new_speed
+		if target and new_speed>0: return self.on(new_speed)
+		elif not target and self.state:	return self.off()
+		elif target and self.state: return self.set_speed(new_speed)
+		return 0
+
 	def on(self, speed=-1):
-		speed = float(speed)
 		if speed<0: speed = self.speed
-		if speed==0: super().off()
-		if super().get_state(): self.set_speed(speed)
+		speed = float(speed)
+		if speed==0: return super().off()
+		if super().get_state(): return self.set_speed(speed)
 		else:
-			super().on()
 			self.speed_ctrl.start(speed)
+			return super().on()
 
 	def off(self):
 		self.speed_ctrl.stop()
@@ -81,7 +109,16 @@ class Fan(Switch):
 	def set_speed(self, new_speed):
 		new_speed = float(new_speed)
 		self.speed_ctrl.ChangeDutyCycle(new_speed)
+		return 0
 
+class GrowLight(Switch):
+	def __init__(self, switch_pin, wattage, min_light_h):
+		super().__init__(switch_pin, wattage)
+		self.timer = sensors_utils.TimerWrap()
+
+	def on_for_x_min(self, min):
+		self.on()
+		self.timer.start(min*60, self.off)
 
 class SoilMoistureSensor:
 	def __init__(self, adc, channel, min_v, max_v, gain=2/3):
@@ -99,7 +136,6 @@ class SoilMoistureSensor:
 		elif perc>100: perc = 100
 		return perc
 
-
 class DHT22:
 	def __init__(self, pin, attempts=3):
 		self.pin = pin
@@ -114,57 +150,34 @@ class DHT22:
 		return [None, None]
 
 class IP_Camera:
-	def __init__(self, usr, pwd, ip, snapshot_dir, interval=-1):
+	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1):
+		self.name = name
 		self.usr = usr
 		self.pwd = pwd
 		self.ip = ip
 		self.snapshot_dir = snapshot_dir
+		self.wattage = wattage
 		self.interval = interval
-		self.timer = TimerWrap()
+		self.timer = sensors_utils.TimerWrap()
 		self.last_returncode = None
 
 	def take_snapshot(self):
-		filename = self.snapshot_dir+get_now().strftime("%Y-%m-%d_%H-%M-%S")+'.jpg'
+		now = sensors_utils.get_now()
+		folder = self.snapshot_dir+now.strftime("%Y-%m-%d")
+		filename = folder+now.strftime("%Y-%m-%d_%H-%M-%S")+'_'+self.name+'.jpg'
+		os.mkdirs(folder,exist_ok=True)
+
 		cmd = 'ffmpeg -y -rtsp_transport tcp -i "rtsp://'+self.usr+':'+self.pwd+'@'+self.ip+'/11" -frames 1 '+filename
 		t = threading.Thread(target=self.call_ffmpeg, args=(cmd,))
 		t.start()
 		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
-		
+
 	def call_ffmpeg(self, cmd):
 		sub = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		self.last_returncode = sub.returncode
 
-
-class TimerWrap:
-	def __init__(self):
-		self.active_since = None
-		self.current_timer = None
-
-	def start(self, seconds, callback, args=None):
-		self.reset()
-		self.current_timer = Timer(seconds, callback, args)
-		self.active_since = unix_now()
-		self.current_timer.start()
-
-	def reset(self):
-		if self.current_timer: self.current_timer.cancel()
-		self.active_since = None
-
-	def elapsed(self):
-		if self.active_since: return unix_now() - self.active_since
-		else: return 0
-
-	def remaining(self):
-		if self.active_since: return self.current_timer.interval - self.elapsed()
-		else: return 0
+	def stop(self):
+		self.interval = -1
+		self.timer.reset()
 
 
-def get_now():
-	from_zone = tz.gettz('UTC')
-	to_zone = tz.gettz('Europe/Rome')
-	dt = datetime.datetime.now()
-	dt = dt.replace(tzinfo=from_zone)
-	return dt.astimezone(to_zone)
-
-def unix_now():
-	return int(time.time()*1000)

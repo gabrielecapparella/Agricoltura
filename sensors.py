@@ -1,142 +1,46 @@
 #!/usr/bin/python3
 
 import RPi.GPIO as GPIO
+import Adafruit_ADS1x15
 import db_utils
 import logging
 from logging.handlers import RotatingFileHandler
-import time
-import Adafruit_DHT
-import Adafruit_ADS1x15
-from threading import Timer
 import json
-import subprocess
 import datetime
-from shutil import copyfile
-import requests
 from dateutil import tz
-import devices
+import devices as devs
 from queue import Queue
 import threading
-
-
-class Lightbulb(devices.Switch):
-	def __init__(self, pin, db):
-		super().__init__(pin)
-		self.was_set_by_human = False
-		self.db = db
-
-	def set_state(self, target=True, was_set_by_human=True):
-		if target: super().on()
-		else:
-			now = super().off()
-			if self.active_since: self.db.insert_actuator_record(("light", self.active_since, now))
-		self.was_set_by_human = was_set_by_human
-
-
-class Irrigation(devices.Pump):
-	def __init__(self, pin, db):
-		super().__init__(pin)
-		self.watering_state = 0 #0:inactive, 1:watering, 2:propagating
-		self.was_set_by_human = False
-		self.db = db
-
-	def get_state(self):
-		return super().get_state()+[self.watering_state]
-
-	def set_state(self, target=True, was_set_by_human=True, w_state=0):
-		if target: super().on()
-		else:
-			now = super().off()
-			if self.active_since: self.db.insert_actuator_record(("water", self.active_since, now))
-		self.was_set_by_human = was_set_by_human
-		self.watering_state = w_state
-
-	def water_cycle(self):
-		ws = self.watering_state
-		if ws==0:
-			self.logger.debug("[Sensors.water_cycle]: water on.")
-			self.set_state(True, False, 1)
-			self.timer.start(1*60, self.water_cycle)	#water for 1min
-		elif ws==1:
-			self.logger.debug("[Sensors.water_cycle]: water off.")
-			self.set_state(False, False, 2)
-			self.timer.start(10*60, self.water_cycle)	#wait for 10min while it spreads
-		elif ws==2:
-			self.logger.debug("[Sensors.water_cycle]: cycle finished.")
-			self.set_state(False, False, 0)
-
-
-class GH_Fan(devices.Fan):
-	def __init__(self, power_pin, speed_pin, db, frequency=25000, default_speed=100.0):
-		super().__init__(power_pin, speed_pin, frequency, default_speed)
-		self.was_set_by_human = False
-		self.db = db
-
-	def set_state(self, target=True, new_speed=None, was_set_by_human=True):
-		if new_speed==None: new_speed = self.speed
-
-		if target and new_speed>0: super().on(new_speed)
-		elif not target and self.state:
-			now = super().off()
-			if self.active_since: self.db.insert_actuator_record(("fan", self.active_since, now))
-		elif target and self.state: super().set_speed(new_speed)
-
-		self.speed = new_speed
-		self.was_set_by_human = was_set_by_human
-
+import sensors_utils
 
 class Sensors:
 	def __init__(self):
 		try:
 			self.loggerSetup()
-
 			self.db = db_utils.DB_Connection()
 
-			self.is_operative = False
-			self.is_running = False
-			self.light_hours = False
-			self.state = True
-			self.gpio_cfg = self.get_gpio_cfg()
-			self.cam_cfg = self.get_cam_cfg()
-
-			self.cycle_timer = None
-			
-			#GPIO.cleanup()
-
+			self.state = [True,False,False,False,False]	#read,fan,heat,light,water. What is currently on
+			self.active_control = [False]*4				#fan,heating,light,irrigation. What is to be controlled
+			self.cycle_timer = sensors_utils.TimerWrap()
 			self.adc = Adafruit_ADS1x15.ADS1115()
 
-			self.moist_sensors = [
-				devices.SoilMoistureSensor(
-					self.adc,
-					self.gpio_cfg['moist_adc_ch_1'],
-					self.gpio_cfg['moist_min'],
-					self.gpio_cfg['moist_max']
-				),
-				devices.SoilMoistureSensor(
-					self.adc,
-					self.gpio_cfg['moist_adc_ch_2'],
-					self.gpio_cfg['moist_min'],
-					self.gpio_cfg['moist_max']
-				)
-			]
+			self.moist_sensors = []
+			self.temp_hum_sensors = []
+			self.fans = []
+			self.heating = []
+			self.grow_lights = []
+			self.irrigation = []
+			self.cameras = []
 
-			self.temp_hum_sensors = [
-				devices.DHT22(self.gpio_cfg['dht22_1']),
-				devices.DHT22(self.gpio_cfg['dht22_2'])
-			]
+			self.devices = {}
 
-			self.camera = devices.IP_Camera(
-				self.cam_cfg['usr'],
-				self.cam_cfg['pwd'],
-				self.cam_cfg['ip'],
-				self.cam_cfg['snapshot_dir']
-			)
+			self.g_lights_schedule = []
 
-			self.water = Irrigation(self.gpio_cfg['water'], self.db)
-			self.light = Lightbulb(self.gpio_cfg['light'], self.db)
-			self.fan = GH_Fan(self.gpio_cfg['fan'], self.gpio_cfg['fan_speed'], self.db)
-
+			self.parse_devices()
 			self.update_thresholds()
+			self.update_rates()
+			self.read_lights_schedule()
+			self.start()
 
 		except Exception as e:
 			self.logger.exception(e)
@@ -154,9 +58,11 @@ class Sensors:
 		if not self.state: return
 		self.logger.info("Cleaning up...")
 
-		self.water.set_state(False)
-		self.light.set_state(False)
-		self.fan.set_state(False)
+		self.set_act(self.fans, False)
+		self.set_act(self.heating, False)
+		self.set_act(self.grow_lights, False)
+		self.set_act(self.irrigation, False)
+
 		GPIO.cleanup()
 
 		self.stop()
@@ -165,95 +71,144 @@ class Sensors:
 		self.logger.removeHandler(self.log_handler)
 		self.state = False
 
-	def set_operative(self, state=True):
-		self.is_operative = state
-
-	def set_running(self, state=True):
-		if state: self.start()
+	def set_state(self, new_state):
+		self.state = new_state
+		if new_state[0]: self.start()
 		else: self.stop()
-		
-	def get_gpio_cfg(self):
-		with open('static/config/devices.json', 'r') as cfg_file:
-			return json.loads(cfg_file.read())	
-			
-	def get_cam_cfg(self):
-		with open('static/config/ip_camera.json', 'r') as cfg_file:
-			return json.loads(cfg_file.read())
+
+	def get_state(self):
+		return self.state + [self.irrigation.get_state[2]]
+
+	def set_act(self, what:list, *state): 
+		try:
+			for name in what:
+				dev = self.devices[name]
+				now = sensors_utils.unix_now()
+
+				active_since = dev.set_state(*state)
+				if active_since>0:
+					time = (now-active_since)/1000 #seconds
+					if isinstance(dev, devs.Irrigation): l = time/60*dev.flow
+					else:  l = 0
+					kwh = time*dev.wattage/3600000,
+					cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
+					self.db.insert_actuator_record(dev.name, active_since, now, kwh, l, cost)
+		except Exception as e:
+			self.logger.warning("[Sensors.set_act]: something bad happened, what='{}' state='{}'\n\n{}".format(what, state, e))
+
+	def do_water_cycle(self, who=[]):
+		if not who: who = self.irrigation
+		for name in who:
+			try:
+				dev = self.devices[name]
+				now = sensors_utils.unix_now()
+				dev.water_cycle()
+				kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
+				cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
+				self.db.insert_actuator_record((name, now, now+dev.water_time*60000, kwh, l, cost))		
+			except Exception as e:
+				self.logger.warning("[Sensors.do_water_cycle]: something bad happened, who='{}'\n\n{}".format(who, e))
+
+	def check_lights_schedule(self, who=[]):
+		if not who: who = self.grow_lights
+		now = sensors_utils.get_now()
+		try:
+			for job in self.g_lights_schedule:
+				if job[0]<=now:
+
+					if job[1]<0 and self.active_control[2]: #additional hours of light
+						to_provide = thresholds['min_light_hours']-sensors_utils.get_day_len()
+						if to_provide>0: job[1] = to_provide
+						else: continue
+
+					for name in who:
+						dev = self.devices[name]
+						dev.on_for_x_min(job[1]*60)
+						kwh = job[1]*dev.wattage/(3600*1000)
+						cost = kwh*self.rates["elec_price"]
+						self.db.insert_actuator_record((name, now, now+job[1]*1000, kwh, 0, cost))			
+					if job[3]: job[1]+=job[3]
+		except Exception as e:
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, e))				
 
 	def update_thresholds(self):
-		with open('static/config/sensors_config.json', 'r') as cfg_file:
+		with open('static/config/thresholds.json', 'r') as cfg_file:
 			self.thresholds = json.loads(cfg_file.read())
-			self.camera.interval = self.thresholds['cam_h']*60*60
+
+	def update_rates(self):
+		with open('static/config/costs_rates.json', 'r') as rates_file:
+			self.rates = json.loads(rates_file.read())
+
+	def read_lights_schedule(self):
+		with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
+			jobs = json.loads(lights_file.read())
+			self.g_light_schedule = []
+			for job in jobs:
+				when = datetime.datetime.strptime(job[0], '%Y-%m-%d %H:%M')
+				hours = job[1]*60
+				interval = datetime.timedelta(seconds=job[2])
+				self.g_light_schedule.append([when, hours, interval])
+
+	def write_lights_schedule(self):
+		with open('static/config/grow_lights_schedule.json', 'w') as lights_file:
+			schedule = []
+			for job in self.g_light_schedule:
+				when = job[0].strftime("%Y-%m-%d %H:%M")
+				hours = job[1]
+				interval = job[2].total_seconds()
+				schedule.append([when, hours, interval])
+			lights_file.write(str(schedule))
 
 	def start(self):
 		self.logger.info("Initiating...")
 		self.cycle()
-		self.camera.take_snapshot()
-
+		for c_name in self.cameras:
+			self.devices[c_name].take_snapshot()
 
 	def restart(self, interval=None):
-		if self.cycle_timer and self.cycle_timer.is_alive(): self.cycle_timer.cancel()
+		self.cycle_timer.reset()
 		if not interval: interval = self.thresholds["interval_min"]
-
-		self.cycle_timer = Timer(interval*60, self.cycle)
-		self.cycle_timer.start()
-		self.is_running = True
+		self.cycle_timer.start(interval*60, self.cycle)
+		self.state[0] = True
 
 	def stop(self):
-		self.is_running = False
-		if self.cycle_timer and self.cycle_timer.is_alive(): self.cycle_timer.cancel()
-		self.camera.timer.reset()
+		self.state[0] = False
+		self.cycle_timer.reset()
+		for c in self.cameras: self.devices[c].stop()
 
 	def cycle(self):
 		try:
 			self.logger.debug('Cycle')
-			readings = self.read_sensors()
-			next_interval = None
 
-			if self.is_operative:
-				op = self.operate(readings)
-				self.logger.debug('[Sensors.operate]: {}'.format(op))
-				if op: next_interval = 1 #check after 1 min instead of standard interval
+			next_interval = None
+			if self.state[0]:
+				readings = self.read_sensors()
+				self.operate(readings)
+				if True in self.state[1:]: next_interval = 1 #check after 1 min instead of standard interval
 			self.restart(next_interval)
 		except Exception as e:
 			self.logger.exception(e)
 			self.clean_up()
 
-	def get_lh_provided(self, day):
-		prov = 0
-		day = db_utils.datetime2unix(day)
-		for i in self.db.get_light_hours(day):
-			prov+=(i[2]-i[1])
-		h_prov = round(prov/3600000, 1)
-		return h_prov
-
-	def get_lh_to_provide(self):
-		h = self.thresholds['min_light_hours']
-		dl = self.get_day_len()
-		h -= dl
-
-		h -= self.get_lh_provided(self.get_now().date())
-		return h			
-			
 	def sensor_read_wrapper(self, sensor, queue):
 		queue.put(sensor.read())
 
 	def read_sensors(self):
 		self.logger.debug("Reading sensors...")
 		threads, q_moist, q_th = [], Queue(), Queue()
-		
-		for sensor in self.moist_sensors:
-			t = threading.Thread(target=self.sensor_read_wrapper, args=(sensor, q_moist))
+
+		for s_name in self.moist_sensors:
+			t = threading.Thread(target=self.sensor_read_wrapper, args=(self.devices[s_name], q_moist))
 			threads.append(t)
 			t.start()
-			
-		for sensor in self.temp_hum_sensors:
-			t = threading.Thread(target=self.sensor_read_wrapper, args=(sensor, q_th))
+
+		for s_name in self.temp_hum_sensors:
+			t = threading.Thread(target=self.sensor_read_wrapper, args=(self.devices[s_name], q_th))
 			threads.append(t)
 			t.start()
-			
+
 		for t in threads: t.join()
-							
+
 		m_min, m_max, m_avg, m_good = 101, -1, 0, 0
 		while not q_moist.empty():
 			reading = q_moist.get()
@@ -265,7 +220,7 @@ class Sensors:
 		if m_good: m_avg = round(m_avg/m_good, 1)
 		else: m_avg = None
 		self.logger.debug("[Sensors.read_sensors]: m_min={}, m_max={}, m_avg={}, m_good={}".format(m_min, m_max, m_avg, m_good))
-		if (m_max-m_min)>self.gpio_cfg["moist_max_delta"]:
+		if (m_max-m_min)>self.thresholds["moist_max_delta"]:
 				self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(m_min, m_max))
 
 		th_min, th_max, th_avg, th_good = [100,101], [-274,-1], [0,0], [0,0]
@@ -280,16 +235,16 @@ class Sensors:
 				if reading[1]<th_min[1]: th_min[1] = reading[1]
 				if reading[1]>th_max[1]: th_max[1] = reading[1]
 				th_avg[1]+=reading[1]
-				th_good[1]+=1				
+				th_good[1]+=1
 		if th_good[0]: th_avg[0] = round(th_avg[0]/th_good[0], 1)
 		else: th_avg[0] = None
 		if th_good[1]: th_avg[1] = round(th_avg[1]/th_good[1], 1)
 		else: th_avg[1] = None
-		
+
 		self.logger.debug("[Sensors.read_sensors]: th_min={}, th_max={}, th_avg={}, th_good={}".format(th_min, th_max, th_avg, th_good))
-		if (th_max[0]-th_min[0])>self.gpio_cfg["dht22_max_temp_delta"]:
+		if (th_max[0]-th_min[0])>self.thresholds["dht22_max_temp_delta"]:
 				self.logger.warning("[Sensors.read_sensors]: Temp readings differ too much (min:{}, max:{})".format(th_min[0], th_max[0]))
-		if (th_max[1]-th_min[1])>self.gpio_cfg["dht22_max_hum_delta"]:
+		if (th_max[1]-th_min[1])>self.thresholds["dht22_max_hum_delta"]:
 				self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(th_min[1], th_max[1]))
 
 		readings = [self.db.unix_now()] + th_avg + [m_avg]
@@ -297,69 +252,77 @@ class Sensors:
 
 		return readings
 
-
-	#returns 0 if no actuator is on
 	def operate(self, readings): #[dt, temp, hum, moist]
-		p = 0
-		h = self.get_now().hour
-		#fan
-		if readings[1]>self.thresholds['max_temp']:
-			if not self.fan.get_state()[0]:
-				self.logger.info("Temperature is {}, turning on the fan".format(readings[1]))
-				self.fan.set_state(True, 100, False)
-				p+=1
-		elif readings[2]>self.thresholds['max_hum']:
-			if not self.fan.get_state()[0]:
-				self.logger.info("Humidity is {}, turning on the fan".format(readings[2]))
-				self.fan.set_state(True, 50, False)
-				p+=1
-		elif self.fan.get_state()[0] and not self.fan.was_set_by_human:
-			self.logger.info("Turning off the fan, no need for it")
-			self.fan.set_state(False, False)
+		#fans
+		if self.active_control[0]:
+			if readings[1]>self.thresholds['max_temp'] and not self.state[1]:
+				self.logger.info("Temperature is too high ({}°C), turning on the fans".format(readings[1]))
+				self.set_act(self.fans, True, 100)
+				self.set_act(self.heating, False)
+				self.state[1] = True
+			elif readings[2]>self.thresholds['max_hum'] and not self.state[1]:
+				self.logger.info("Humidity is too high ({}%), turning on the fans".format(readings[2]))
+				self.set_act(self.fans, True, 50)
+				self.state[1] = True
+			elif self.state[1]:
+				self.logger.info("Turning off the fans, no need for them anymore")
+				self.set_act(self.fans, False)
+				self.state[1] = False
 
+		#heating
+		if self.active_control[1]:
+			if readings[1]<self.thresholds['min_temp'] and not self.state[2]:
+				self.logger.info("Temperature is too low ({}°C), turning on the heating".format(readings[1]))
+				self.set_act(self.heating, True)
+				self.state[2] = True
+			elif self.state[2]:
+				self.logger.info("Turning off the heating, no need for it anymore")
+				self.set_act(self.heating, False)
+				self.state[2] = False
 
-		#light
-		if readings[1]<self.thresholds['min_temp']:
-			if not self.light.get_state():
-				self.logger.info("Temperature is too low ({}°C), turning on the light".format(readings[1]))
-				self.light.set_state(True, False)
-				p+=2
-		elif readings[1]>self.thresholds['max_temp'] and self.light.get_state():
-			self.logger.info("Temperature is too high ({}°C), turning off the light".format(readings[1]))
-			self.light.set_state(False, False)
-		elif h>18 and self.get_lh_to_provide()>0:
-			self.logger.info("There were not enough light hours today [{}], turning on the light".format(self.light_hours))
-			self.light.set_state(True, False)
-			p+=2
-		elif self.light.get_state() and not self.light.was_set_by_human:
-			self.logger.info("Turning off the light, no need for it")
-			self.light.set_state(False, False)
+		#grow_lights
+		self.check_lights_schedule(self.grow_lights)
+		self.write_lights_schedule()
 
+		#irrigation
+		if self.active_control[3]:
+			ws = self.irrigation.get_state()
+			if readings[3]<self.thresholds['min_soil_moist'] and not ws[0] and ws[2]==0:
+				self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
+				self.set_act(self.irrigation, 'water_cycle')
+			elif ws[0] and readings[3]>self.thresholds['max_soil_moist']:
+				self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {}), watering_state: {}".format(readings[3], self.thresholds['max_soil_moist'], ws[2]))
+				self.set_act(self.irrigation, False)
 
-		#water
-		ws = self.water.get_state()
-		if readings[3]<self.thresholds['min_soil_moist'] and not ws[0] and ws[1]==0:
-			self.logger.info("Soil moisture is {}, turning on the water".format(readings[3]))
-			self.water.water_cycle()
-			p+=4
-		elif ws[0] and readings[3]>self.thresholds['max_soil_moist']:
-			self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {}), was set by human: {}".format(readings[3], self.thresholds['max_soil_moist'], self.water.was_set_by_human) )
-			self.water.set_state(False, False)
-
-		return p
-
-	def get_day_len(self):
-		self.logger.debug("Getting day len...")
-		try:
-			response = requests.get('http://api.sunrise-sunset.org/json?lat=41.794940&lng=12.374707')
-			hms = response.json()['results']['day_length'].split(':')
-			return round(int(hms[0])+int(hms[1])/60, 1)
-		except:
-			return False
-
-	def get_now(self):
-		from_zone = tz.gettz('UTC')
-		to_zone = tz.gettz('Europe/Rome')
-		dt = datetime.datetime.now()
-		dt = dt.replace(tzinfo=from_zone)
-		return dt.astimezone(to_zone)
+	def parse_devices(self):
+		with open('static/config/devices.json', 'r') as devs_file:
+			for dev in json.loads(devs_file.read()):
+				try:
+					if dev['type']=='soil_moisture_sensor' and dev['model']=='generic_analog':
+						self.devices[dev['name']] = devs.SoilMoistureSensor(self.adc, dev['adc_channel'], dev['100_voltage'], dev['0_voltage'], dev['adc_gain'])
+						if dev['enabled']: self.moist_sensors.append(dev['name'])
+					elif dev['type']=='temp_hum_sensor':
+						if dev['model']=='DHT22':
+							self.devices[dev['name']] =	devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
+						elif dev['model']=='SHT31-D':
+							pass #TODO
+						if dev['enabled']: self.temp_hum_sensors.append(dev['name'])
+					elif dev['type']=='fan' and dev['model']=='pwm_fan':
+						self.devices[dev['name']] =	devs.Fan(dev['GPIO_switch_pin'], dev['GPIO_speed_pin'], dev['wattage'], dev['pwm_frequency'])
+						if dev['enabled']: self.fans.append(dev['name'])
+					elif dev['type']=='camera' and dev['model']=='ip_camera':
+						self.devices[dev['name']] =	devs.IP_Camera(dev['name'], dev['user'], dev['password'], dev['ip'], dev['snapshot_dir'], dev['wattage'], dev['snapshot_interval_h'])
+						if dev['enabled']: self.cameras.append(dev['name'])
+					elif dev['type']=='irrigation' and dev['model']=='simple_switch':
+						self.devices[dev['name']] =	devs.Irrigation(dev['GPIO_switch_pin'], dev['wattage'], dev['water_flow'], dev['cycle_water_time'], dev['cycle_wait_time'])
+						if dev['enabled']: self.irrigation.append(dev['name'])
+					elif dev['type']=='heating' and dev['model']=='simple_switch':
+						self.devices[dev['name']] =	devs.Switch(dev['GPIO_switch_pin'], dev['wattage'])
+						if dev['enabled']: self.heating.append(dev['name'])
+					elif dev['type']=='grow_light' and dev['model']=='simple_switch':
+						self.devices[dev['name']] =	devs.GrowLight(dev['GPIO_switch_pin'], dev['wattage'])
+						if dev['enabled']: self.grow_lights.append(dev['name'])
+					else: raise RuntimeError("There was a problem while parsing device: {}".format(dev))
+				except Exception as e:
+					self.logger.exception("[Sensors.parse_devices]: {}".format(e))
+		print("[Sensors.parse_devices]: {}".format(self.devices))

@@ -1,15 +1,79 @@
-{
-	"water" : 26,
-	"light" : 13,
-	"fan" : 19,
-	"fan_speed" : 21,
-	"dht22_1" : 16,
-	"dht22_2" : 20,
-	"dht22_max_temp_delta": 20,
-	"dht22_max_hum_delta": 30,
-	"moist_adc_ch_1" : 2,
-	"moist_adc_ch_2" : 3,
-	"moist_min" : 3400,
-	"moist_max" : 26700,
-	"moist_max_delta": 30
-}
+[
+  {
+		"name": "moist_1",
+    "type": "soil_moisture_sensor",
+    "model": "generic_analog",
+    "100_voltage": 3400,
+    "0_voltage": 26700,
+    "adc_channel": 2,
+		"adc_gain": 0.6666666666666666,
+    "enabled": true
+  },
+  {
+		"name": "moist_2",
+    "type": "soil_moisture_sensor",
+    "model": "generic_analog",
+    "100_voltage": 3400,
+    "0_voltage": 26700,
+    "adc_channel": 3,
+		"adc_gain": 0.6666666666666666,
+    "enabled": true
+  },
+  {
+		"name": "th_1",
+    "type": "temp_hum_sensor",
+    "model": "DHT22",
+    "GPIO_pin": 16,
+    "max_reading_attempts": 3,
+    "enabled": true
+  },
+  {
+		"name": "th_2",
+    "type": "temp_hum_sensor",
+    "model": "DHT22",
+    "GPIO_pin": 20,
+    "max_reading_attempts": 3,
+    "enabled": true
+  },
+  {
+		"name": "arctic_f8_pwm",
+    "type": "fan",
+    "model": "pwm_fan",
+    "GPIO_switch_pin": 19,
+    "GPIO_speed_pin": 21,
+    "pwm_frequency": 25000,
+    "wattage": 5,
+    "enabled": true
+  },
+  {
+		"name": "main_camera",
+    "type": "camera",
+    "model": "ip_camera",
+    "user": "admin",
+    "password": "admin",
+    "ip": "192.168.1.103",
+    "snapshot_dir" : "static/photos/",
+    "snapshot_interval_h": 1.0,
+    "wattage": 12,
+    "enabled": true
+  },
+  {
+		"name": "drippers_1",
+    "type": "irrigation",
+    "model": "simple_switch",
+    "GPIO_switch_pin": 26,
+		"cycle_water_time": 1,
+		"cycle_wait_time": 10,
+    "wattage": 5,
+    "water_flow": 0.1,
+    "enabled": false
+  },
+  {
+		"name": "halogen_light_140W",
+    "type": "heating",
+    "model": "simple_switch",
+    "GPIO_switch_pin": 13,
+    "wattage": 140,
+    "enabled": true
+  }
+]

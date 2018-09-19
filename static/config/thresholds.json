@@ -1,0 +1,1 @@
+{"interval_min": 10.0, "max_hum": 98.0, "min_light_hours": 12.0, "min_soil_moist": 5.0, "max_soil_moist": 60.0, "min_temp": 15.0, "max_temp": 33.0, "moist_max_delta": 20.0, "dht22_max_temp_delta": 5.0, "dht22_max_hum_delta": 10.0}

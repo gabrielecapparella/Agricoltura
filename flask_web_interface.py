@@ -10,7 +10,6 @@ web_interface = Blueprint('web_interface', __name__, template_folder='templates'
 
 @web_interface.route('/')
 def index():
-	r = current_app.db.get_last_reading()
 	return render_template('index.html', title="Agricoltura")
 	
 @web_interface.route('/login')

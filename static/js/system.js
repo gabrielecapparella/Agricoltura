@@ -1,15 +1,15 @@
 $(document).ready(function(){
-	$('#error-log').click(function(){getLog('/methods/getErrorLog', $(this));});
-	$('#access-log').click(function(){getLog('/methods/getAccessLog', $(this));});
-	$('#sensors-log').click(function(){getLog('/methods/getSensorsLog', $(this));});
-	$('#db-log').click(function(){getLog('/methods/getDbLog', $(this));});
+	$('#error-log').click(function(){getLog('/agricoltura/methods/getErrorLog', $(this));});
+	$('#access-log').click(function(){getLog('/agricoltura/methods/getAccessLog', $(this));});
+	$('#sensors-log').click(function(){getLog('/agricoltura/methods/getSensorsLog', $(this));});
+	$('#db-log').click(function(){getLog('/agricoltura/methods/getDbLog', $(this));});
 	
 
-	getLog('/methods/getErrorLog', $('#error-log'));
+	getLog('/agricoltura/methods/getErrorLog', $('#error-log'));
 	getUsers();
 	
 	$('#new-user-confirm').click(function(){
-		$.ajax({ url: '/methods/addUser', 
+		$.ajax({ url: '/agricoltura/methods/addUser', 
 			type: 'POST',
 			contentType: 'application/json', 
 			data: JSON.stringify({ 
@@ -40,7 +40,7 @@ $(document).ready(function(){
 
 	$('#del-user').click(function(){
 		if($('#table-users>tbody>tr.checked-table-row').length) {
-			$.ajax({ url: '/methods/deleteUser', 
+			$.ajax({ url: '/agricoltura/methods/deleteUser', 
 				type: 'POST',
 				contentType: 'application/json', 
 				data: JSON.stringify({ 
@@ -68,7 +68,7 @@ $(document).ready(function(){
 
 	$('#new-api-key').click(function(){
 		if($('#table-users>tbody>tr.checked-table-row').length) {
-			$.ajax({ url: '/methods/regenerateApiKey', 
+			$.ajax({ url: '/agricoltura/methods/regenerateApiKey', 
 				type: 'POST',
 				contentType: 'application/json', 
 				data: JSON.stringify({ 
@@ -110,7 +110,7 @@ $(document).ready(function(){
 	}
 	
 	function getUsers() {
-		$.getJSON('/methods/getUsers', function(data){
+		$.getJSON('/agricoltura/methods/getUsers', function(data){
 			var i, content='';
 			data.forEach(function(i) {
 				if (i[2]) {type = 'administrator';}
@@ -133,7 +133,7 @@ $(document).ready(function(){
 		});
 	}
 	
-	$.getJSON('/methods/getSystemStatus', function(data){
+	$.getJSON('/agricoltura/methods/getSystemStatus', function(data){
 		$('#cpu-temp').html(data['cpu_temp']);
 		$('#uptime').html(data['uptime']);
 		$('#storage').attr('aria-valuenow', data['st_perc']);
@@ -142,7 +142,7 @@ $(document).ready(function(){
 		$('#ram').attr('style', 'width: '+data['mem_perc']+'%');		
 	});
 	
-	$('#poweroff').click(function(){$.get('/methods/poweroff');});
-	$('#reboot').click(function(){$.get('/methods/reboot');});
+	$('#poweroff').click(function(){$.get('/agricoltura/methods/poweroff');});
+	$('#reboot').click(function(){$.get('/agricoltura/methods/reboot');});
 		
 });

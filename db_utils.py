@@ -19,7 +19,7 @@ class DB_Connection:
 			self.__config = json.loads(cfg_file.read())
 
 		self.__config['database'] = db
-		self.pool = self.create_pool(pool_name="db_utils_pool", pool_size=3)
+		self.pool = self.create_pool(pool_name="db_utils_pool", pool_size=10)
 
 	def create_pool(self, pool_name, pool_size):
 		pool = mysql.connector.pooling.MySQLConnectionPool(
@@ -61,8 +61,8 @@ class DB_Connection:
 		result = True
 		try:
 			cursor.execute(model, data)
-		except:
-			self.logger.exception('DB.Insert: There was a problem while executing "{}"'.format(model))
+		except Exception as e:
+			self.logger.exception('DB.Insert: There was a problem while executing "{}"\n\n{}'.format(model, e))
 			result = False
 		finally:
 			cursor.close()
@@ -76,32 +76,26 @@ class DB_Connection:
 		try:
 			cursor.execute(model, data)
 			rows = cursor.fetchall()
-		except:
-			self.logger.exception('DB.Select: There was a problem while executing "{}"'.format(model))
+		except Exception as e:
+			self.logger.exception('DB.Select: There was a problem while executing "{}"\n\n{}'.format(model, e))
 		finally:
 			cursor.close()
 			conn.close()
-		return rows
+			return rows
 
-	def insert_actuator_record(self, data):
-		query = ("INSERT INTO actuators_records"
-			" (act_name, start, end, kwh, l, cost)"
-			" VALUES (%s, %s, %s, %s, %s)")
+	def insert_device_record(self, data):
+		query = ("INSERT INTO costs"
+			" (device, start, end, kwh, l, cost)"
+			" VALUES (%s, %s, %s, %s, %s, %s)")
 		return self.insert(query, data)
 
-	def insert_uptime(self, data):
-		query = ("INSERT INTO uptimes"
-			" (start, end)"
-			" VALUES (%s, %s)")
-		return self.insert(query, data)
-
-	def get_actuators_records(self, date_from=None, date_to=None, what="act_name, start, end, kwh, l, cost"):
+	def get_costs(self, date_from=None, date_to=None, what="device, start, end, kwh, l, cost"):
 		for c in [';', "'", '"']:
 			if c in what:
-				self.logger.warn("DB.get_actuators_records: someone tried to inject evil characters -> {}".format(what))
+				self.logger.warn("DB.get_costs: someone tried to inject evil characters -> {}".format(what))
 				return []
 
-		query = "SELECT {} FROM actuators_records".format(what)
+		query = "SELECT {} FROM costs".format(what)
 
 		not_null = ''
 		for i in what.split(','): not_null+=' AND {} IS NOT NULL'.format(i)
@@ -112,18 +106,7 @@ class DB_Connection:
 		elif date_from:
 			return self.select(query+" WHERE start >= %s AND"+not_null, (date_from,))
 		elif (not date_from) and (not date_to):
-			 return self.select(query+' WHERE'+not_null)
-		else:
-			return []
-
-	def get_uptimes(self, date_from=None, date_to=None):
-		query = ("SELECT * FROM uptimes")
-		if (date_from) and (date_to):
-			return self.select(query+" WHERE start BETWEEN %s AND %s", (date_from, date_to))
-		elif date_from:
-			return self.select(query+" WHERE start >= %s", (date_from,))
-		elif (not date_from) and (not date_to):
-			 return self.select(query)
+			return self.select(query+' WHERE'+not_null)
 		else:
 			return []
 
@@ -151,7 +134,7 @@ class DB_Connection:
 		elif date_from:
 			return self.select(query+" WHERE datetime >= %s AND"+not_null, (date_from,))
 		elif (not date_from) and (not date_to):
-			 return self.select(query+' WHERE'+not_null)
+			return self.select(query+' WHERE'+not_null)
 		else:
 			return []
 
@@ -236,18 +219,10 @@ class DB_Connection:
 			1,
 			1
 		)
-		return self.insert_actuator_record(random_data)
-
-	def insert_random_uptime(self): #for testing
-		now = self.unix_now()
-		random_data = (
-			now,
-			now+random.randint(1000, 60000)
-		)
-		return self.insert_uptime(random_data)
+		return self.insert_device_record(random_data)
 
 	def get_hash(self, pwd):
-		return	hashlib.sha256(pwd.encode('utf-8')).hexdigest()
+		return hashlib.sha256(pwd.encode('utf-8')).hexdigest()
 
 	def unix_now(self):
 		return int(time.time()*1000)
@@ -267,15 +242,15 @@ def setup(usr, pwd, db):
 		"  PRIMARY KEY (`datetime`)"
 		") ENGINE=InnoDB")
 
-	table_actuators = (
-		"CREATE TABLE `actuators_records` ("
-		"  `act_name` CHAR(10) NOT NULL,"
+	table_costs = (
+		"CREATE TABLE `costs` ("
+		"  `device` CHAR(10) NOT NULL,"
 		"  `start` BIGINT UNSIGNED NOT NULL,"
 		"  `end` BIGINT UNSIGNED NOT NULL,"
 		"  `kwh` DECIMAL(6, 4),"
 		"  `l` DECIMAL(6, 4),"
 		"  `cost` DECIMAL(6, 4),"
-		"  PRIMARY KEY (`act_name`, `start`)"
+		"  PRIMARY KEY (`device`, `start`)"
 		") ENGINE=InnoDB")
 
 	table_users = (
@@ -296,30 +271,22 @@ def setup(usr, pwd, db):
 		"  PRIMARY KEY (`username`, `datetime`)"
 		") ENGINE=InnoDB")
 
-	table_uptimes = (
-		"CREATE TABLE `uptimes` ("
-		"  `start` BIGINT UNSIGNED NOT NULL,"
-		"  `end` BIGINT UNSIGNED NOT NULL,"
-		"  PRIMARY KEY (`start`)"
-		") ENGINE=InnoDB")
-
 	try:
 		connection = mysql.connector.connect(user=usr, password=pwd)
 		cursor = connection.cursor()
 
-		cursor.execute("DROP DATABASE IF EXISTS {}".format(db))
-		cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db))
+		#cursor.execute("DROP DATABASE IF EXISTS {}".format(db))
+		#cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db))
 		connection.database = db
 
-		cursor.execute(table_sensors)
-		cursor.execute(table_actuators)
-		cursor.execute(table_users)
-		cursor.execute(table_logins)
-		cursor.execute(table_uptimes)
+		#cursor.execute(table_sensors)
+		cursor.execute(table_costs)
+		#cursor.execute(table_users)
+		#cursor.execute(table_logins)
 
-		admin_pwd_hash = hashlib.sha256(admin_pwd.encode('utf-8')).hexdigest()
-		admin_api_key = hashlib.sha1(os.urandom(64)).hexdigest()
-		cursor.execute("INSERT INTO users (username, pwd_hash, api_key, is_admin) VALUES (%s, %s, %s, %s)", ('admin', admin_pwd_hash, admin_api_key, True))
+		#admin_pwd_hash = hashlib.sha256(admin_pwd.encode('utf-8')).hexdigest()
+		#admin_api_key = hashlib.sha1(os.urandom(64)).hexdigest()
+		#cursor.execute("INSERT INTO users (username, pwd_hash, api_key, is_admin) VALUES (%s, %s, %s, %s)", ('admin', admin_pwd_hash, admin_api_key, True))
 
 		connection.commit()
 		cursor.close()

@@ -8,3 +8,5 @@ photos/
 ip_camera.json
 database.json
 main_app.json
+env-agricoltura/
+start.sh

@@ -25,9 +25,6 @@ def usr_login():
 
 	return jsonify(result=2) #wrong credentials
 
-
-
-
 @software_methods.route('/getHumHistory')
 def get_hum_history():
 	return json.dumps(current_app.db.get_readings(what='datetime, humidity'))
@@ -40,13 +37,9 @@ def get_moist_history():
 def get_act_history():
 	return json.dumps(current_app.db.get_actuators_records())
 
-@software_methods.route('/getParameters')
-def get_parameters():
-	return fread('static/config/sensors_config.json')
-
 @software_methods.route('/getRates')
 def get_rates():
-	return fread('static/config/actuators_rates.json')
+	return fread('static/config/costs_rates.json')
 
 @software_methods.route('/setRates', methods = ['POST'])
 def set_rates():
@@ -56,76 +49,76 @@ def set_rates():
 		for k,v in data.items():
 			floaty_dict[k] = float(v)
 
-		with open('static/config/actuators_rates.json', 'w') as file:
+		with open('static/config/costs_rates.json', 'w') as file:
 			file.write(json.dumps(floaty_dict))
 		return 'ok'
 	else:
 		abort(403)
 
-@software_methods.route('/getCosts', methods = ['POST'])
-def get_costs():
-	if isAuthorized():
-		data = request.get_json(force=True)
+# @software_methods.route('/getCosts', methods = ['POST'])
+# def get_costs():
+# 	if isAuthorized():
+# 		data = request.get_json(force=True)
 
-		d_from = data['from']
-		d_to = data['to']
+# 		d_from = data['from']
+# 		d_to = data['to']
 
-		rates = json.loads(fread('static/config/actuators_rates.json'))
-		act = current_app.db.get_actuators_records(d_from, d_to)
-		upt = current_app.db.get_uptimes(d_from, d_to)
+# 		rates = json.loads(fread('static/config/costs_rates.json'))
+# 		act = current_app.db.get_actuators_records(d_from, d_to)
+# 		upt = current_app.db.get_uptimes(d_from, d_to)
 
-		water_used, pump_used, fan_used, light_used, server_used = 0, 0, 0, 0, 0
-		for i in act:
-			time_s = (i[2]-i[1])/1000
-			time_min = time_s/60
-			time_h = time_min/60
+# 		water_used, pump_used, fan_used, light_used, server_used = 0, 0, 0, 0, 0
+# 		for i in act:
+# 			time_s = (i[2]-i[1])/1000
+# 			time_min = time_s/60
+# 			time_h = time_min/60
 
-			if i[0]=='water':
-				water_used += (time_min*rates['pump_f'])		#l
-				pump_used += (time_h*rates['pump_w'])/1000		#KWh
-			elif i[0]=='fan':
-				fan_used += (time_h*rates['fan_w'])/1000
-			elif i[0]=='light':
-				light_used += (time_h*rates['light_w'])/1000
+# 			if i[0]=='water':
+# 				water_used += (time_min*rates['pump_f'])		#l
+# 				pump_used += (time_h*rates['pump_w'])/1000		#KWh
+# 			elif i[0]=='fan':
+# 				fan_used += (time_h*rates['fan_w'])/1000
+# 			elif i[0]=='light':
+# 				light_used += (time_h*rates['light_w'])/1000
 
-		for i in upt:
-			time_h = (i[1]-i[0])/3600
-			server_used += time_h*rates['server_w']/1000		#KWh
+# 		for i in upt:
+# 			time_h = (i[1]-i[0])/3600
+# 			server_used += time_h*rates['server_w']/1000		#KWh
 
-		pump_cost = pump_used*rates['elec_price']
-		water_cost = water_used*rates['water_price']/1000
-		fan_cost = fan_used*rates['elec_price']
-		light_cost = light_used*rates['elec_price']
-		server_cost = server_used*rates['elec_price']
+# 		pump_cost = pump_used*rates['elec_price']
+# 		water_cost = water_used*rates['water_price']/1000
+# 		fan_cost = fan_used*rates['elec_price']
+# 		light_cost = light_used*rates['elec_price']
+# 		server_cost = server_used*rates['elec_price']
 
-		elec_used = pump_used + fan_used + light_used + server_used
-		elec_cost = pump_cost + fan_cost + light_cost + server_cost
+# 		elec_used = pump_used + fan_used + light_used + server_used
+# 		elec_cost = pump_cost + fan_cost + light_cost + server_cost
 
-		if not d_from: d_from = upt[0][0]
-		else: d_from/=1000
-		if not d_to: d_to = current_app.db.unix_now()/1000
-		else: d_to/=1000
-		total_days = (d_to-d_from)/86400
-		if total_days<1: total_days = 1
+# 		if not d_from: d_from = upt[0][0]
+# 		else: d_from/=1000
+# 		if not d_to: d_to = current_app.db.unix_now()/1000
+# 		else: d_to/=1000
+# 		total_days = (d_to-d_from)/86400
+# 		if total_days<1: total_days = 1
 
-		elec_avg = elec_cost/total_days
-		water_avg =water_cost/total_days
-		pump_avg = pump_cost/total_days
-		fan_avg = fan_cost/total_days
-		light_avg = light_cost/total_days
-		server_avg = server_cost/total_days
+# 		elec_avg = elec_cost/total_days
+# 		water_avg =water_cost/total_days
+# 		pump_avg = pump_cost/total_days
+# 		fan_avg = fan_cost/total_days
+# 		light_avg = light_cost/total_days
+# 		server_avg = server_cost/total_days
 
-		costs = [		#qnt, avg, tot
-			['{:.3f} Kwh'.format(elec_used), '{:.3f} €/d'.format(elec_avg), '{:.3f} €'.format(elec_cost)],
-			['{:.3f} L'.format(water_used), '{:.3f} €/d'.format(water_avg), '{:.3f} €'.format(water_cost)],
-			['{:.3f} Kwh'.format(fan_used), '{:.3f} €/d'.format(fan_avg), '{:.3f} €'.format(fan_cost)],
-			['{:.3f} Kwh'.format(pump_used), '{:.3f} €/d'.format(pump_avg), '{:.3f} €'.format(pump_cost)],
-			['{:.3f} Kwh'.format(light_used), '{:.3f} €/d'.format(light_avg), '{:.3f} €'.format(light_cost)],
-			['{:.3f} Kwh'.format(server_used), '{:.3f} €/d'.format(server_avg), '{:.3f} €'.format(server_cost)]]
+# 		costs = [		#qnt, avg, tot
+# 			['{:.3f} Kwh'.format(elec_used), '{:.3f} €/d'.format(elec_avg), '{:.3f} €'.format(elec_cost)],
+# 			['{:.3f} L'.format(water_used), '{:.3f} €/d'.format(water_avg), '{:.3f} €'.format(water_cost)],
+# 			['{:.3f} Kwh'.format(fan_used), '{:.3f} €/d'.format(fan_avg), '{:.3f} €'.format(fan_cost)],
+# 			['{:.3f} Kwh'.format(pump_used), '{:.3f} €/d'.format(pump_avg), '{:.3f} €'.format(pump_cost)],
+# 			['{:.3f} Kwh'.format(light_used), '{:.3f} €/d'.format(light_avg), '{:.3f} €'.format(light_cost)],
+# 			['{:.3f} Kwh'.format(server_used), '{:.3f} €/d'.format(server_avg), '{:.3f} €'.format(server_cost)]]
 
-		return json.dumps(costs)
-	else:
-		abort(403)
+# 		return json.dumps(costs)
+# 	else:
+# 		abort(403)
 
 @software_methods.route('/getAccessLog')
 def get_access_log():

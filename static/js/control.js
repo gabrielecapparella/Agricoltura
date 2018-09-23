@@ -1,12 +1,12 @@
 $(document).ready(function(){
 
-	$.getJSON('/methods/getLastReading', function(data){
+	$.getJSON('/agricoltura/methods/getLastReading', function(data){
 		$('#temp-reading').html(data['temp']);
 		$('#hum-reading').html(data['hum']);
 		$('#moist-reading').html(data['moist']);
 	});
 
-	$.getJSON('/methods/getActuators', function(data){
+	$.getJSON('/agricoltura/methods/getActuators', function(data){
 		if(data['sensors_on']) { $('#sensors-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
 		if(data['actuators_on']) { $('#actuators-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
 		if(data['light_on']) { $('#light-toggle').attr('class', 'toggle-button toggle-button-on'); }
@@ -25,7 +25,7 @@ $(document).ready(function(){
 	$('#calculate-costs').click(getCosts);
 
 	$('#update-param').click(function(){
-		$.ajax({ url: '/methods/setParameters',
+		$.ajax({ url: '/agricoltura/methods/setParameters',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
@@ -52,7 +52,7 @@ $(document).ready(function(){
 	});
 
 	$('#update-rates').click(function(){
-		$.ajax({ url: '/methods/setRates',
+		$.ajax({ url: '/agricoltura/methods/setRates',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
@@ -81,7 +81,7 @@ $(document).ready(function(){
 		if( $('#sensors-toggle').hasClass('toggle-button-on') ) { target = false; }
 		else { target = true; }
 
-		$.ajax({ url: '/methods/setSensors',
+		$.ajax({ url: '/agricoltura/methods/setSensors',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: target }),
@@ -95,7 +95,7 @@ $(document).ready(function(){
 		if( $('#actuators-toggle').hasClass('toggle-button-on') ) { target = false; }
 		else { target = true; }
 
-		$.ajax({ url: '/methods/setActuators',
+		$.ajax({ url: '/agricoltura/methods/setActuators',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: target }),
@@ -109,7 +109,7 @@ $(document).ready(function(){
 		if( $('#light-toggle').hasClass('toggle-button-on') ) { target = false; }
 		else { target = true; }
 
-		$.ajax({ url: '/methods/setLight',
+		$.ajax({ url: '/agricoltura/methods/setLight',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: target }),
@@ -123,7 +123,7 @@ $(document).ready(function(){
 		if( $('#irrigation-toggle').hasClass('toggle-button-on') ) { target = false; }
 		else { target = true; }
 
-		$.ajax({ url: '/methods/setWater',
+		$.ajax({ url: '/agricoltura/methods/setWater',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: target }),
@@ -134,7 +134,7 @@ $(document).ready(function(){
 	});
 
 	$('#fan-zero').click(function(){
-		$.ajax({ url: '/methods/setFan',
+		$.ajax({ url: '/agricoltura/methods/setFan',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: false, targetSpeed: 0 }),
@@ -145,7 +145,7 @@ $(document).ready(function(){
 	});
 
 	$('#fan-one').click(function(){
-		$.ajax({ url: '/methods/setFan',
+		$.ajax({ url: '/agricoltura/methods/setFan',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: true, targetSpeed: 50 }),
@@ -156,7 +156,7 @@ $(document).ready(function(){
 	});
 
 	$('#fan-two').click(function(){
-		$.ajax({ url: '/methods/setFan',
+		$.ajax({ url: '/agricoltura/methods/setFan',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({ targetState: true, targetSpeed: 100 }),
@@ -167,7 +167,7 @@ $(document).ready(function(){
 	});
 
 	$('#sensors-export').click(function(){
-		$.ajax({ url: '/methods/getReadings',
+		$.ajax({ url: '/agricoltura/methods/getReadings',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
@@ -182,7 +182,7 @@ $(document).ready(function(){
 	});
 
 	$('#actuators-export').click(function(){
-		$.ajax({ url: '/methods/getActuators',
+		$.ajax({ url: '/agricoltura/methods/getActuators',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
@@ -197,7 +197,7 @@ $(document).ready(function(){
 	});
 
 	function getCosts() {
-		$.ajax({ url: '/methods/getCosts',
+		$.ajax({ url: '/agricoltura/methods/getCosts',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
@@ -227,7 +227,7 @@ $(document).ready(function(){
 	}
 
 	function getParameters() {
-		$.getJSON('/methods/getParameters', function(data){
+		$.getJSON('/agricoltura/methods/getParameters', function(data){
 			$('#interval-min').val(data['interval_min']);
 			$('#min-temp').val(data['min_temp']);
 			$('#max-temp').val(data['max_temp']);
@@ -240,7 +240,7 @@ $(document).ready(function(){
 	}
 
 	function getRates() {
-		$.getJSON('/methods/getRates', function(data){
+		$.getJSON('/agricoltura/methods/getRates', function(data){
 			$('#elec-price').val(data['elec_price']);
 			$('#water-price').val(data['water_price']);
 			$('#fan-w').val(data['fan_w']);

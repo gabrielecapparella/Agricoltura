@@ -3,6 +3,6 @@
 		"path/certs/fullchain.pem", 
 		"path/certs/privkey.pem"
 	],
-	
-	"session_key": "314159265358979323846"
+	"session_key": "314159265358979323846",
+	"homebridge": false
 }

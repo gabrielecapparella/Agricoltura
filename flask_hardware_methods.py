@@ -17,89 +17,43 @@ def last_reading():
 	dt = dt.strftime("%Y-%m-%d %H:%M:%S")
 	return jsonify(dt=dt, temp=reading[1], hum=reading[2], moist=reading[3])
 
-@hardware_methods.route('/getActuators')
-def get_actuators():
-	f_state = current_app.sensors.fan.get_state()
+@hardware_methods.route('/getActuatorsState')
+def get_actuators_state():
+	s = current_app.sensors
+	a_s = s.get_actuators_state
+	act = {}
+	
+	act['temp_hum'] = a_s(s.temp_hum_sensors)
+	act['moist'] = a_s(s.moist_sensors)
+	act['fans'] = a_s(s.fans)
+	act['heating'] = a_s(s.heating)
+	act['grow_lights'] = a_s(s.grow_lights)
+	act['irrigation'] = a_s(s.irrigation)
 
-	return jsonify(
-		fan_on = f_state[0],
-		fan_speed = f_state[1],
-		light_on = current_app.sensors.light.get_state(),
-		water_on = current_app.sensors.water.get_state()[0],
-		sensors_on = current_app.sensors.is_running,
-		actuators_on = current_app.sensors.is_operative
-		)
+	return json.dumps(act)
 
-@hardware_methods.route('/setActuators', methods = ['POST'])
-def set_actuators():
-	if isAuthorized():
-		state = request.get_json(force=True)['targetState']
-		current_app.sensors.is_operative = state
-		return 'ok'
-	else:
-		abort(403)
-
-@hardware_methods.route('/getSnapshot')
-def get_snapshot():
-	if isAuthorized():
-		current_app.sensors.take_snapshot()
-		return 'ok'
-	else:
-		abort(403)
-
-@hardware_methods.route('/setSensors', methods = ['POST'])
-def set_sensors():
-	if isAuthorized():
-		state = request.get_json(force=True)['targetState']
-		current_app.sensors.set_running(state)
-		return 'ok'
-	else:
-		abort(403)
-
-@hardware_methods.route('/setFan', methods = ['POST'])
-def set_fan():
+@hardware_methods.route('/setActuators')		
+def setActuator():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		print('get_set.set_fan: ', data)
-		state = data['targetState']
-		speed = data.get('targetSpeed', 100)
-		current_app.sensors.fan.set_state(state, speed)
+		current_app.sensors.set_act(data[0], *data[1])
 		return 'ok'
 	else:
-		abort(403)
+		abort(403)	
 
-@hardware_methods.route('/getFan')
-def get_fan():
-	f_state = current_app.sensors.fan.get_state()
-	return jsonify(fan_on=f_state[0], fan_speed=f_state[1])
+@hardware_methods.route('/getActuatorsCfg')
+def get_actuators_cfg():	
+	with open('static/config/devices.json', 'r') as devs_file:
+		return devs_file.read()
 
-@hardware_methods.route('/setLight', methods = ['POST'])
-def set_light():
+@hardware_methods.route('/setSensorsState', methods = ['POST'])
+def set_sensors_state():
 	if isAuthorized():
-		target = request.get_json(force=True)['targetState']
-		current_app.sensors.light.set_state(target)
+		state = request.get_json(force=True)
+		current_app.sensors.set_state(state)
 		return 'ok'
 	else:
 		abort(403)
-
-@hardware_methods.route('/getLight')
-def get_light():
-	l_state = current_app.sensors.light.get_state()
-	return jsonify(light_on=l_state)
-
-@hardware_methods.route('/setWater', methods = ['POST'])
-def set_water():
-	if isAuthorized():
-		target = request.get_json(force=True)['targetState']
-		current_app.sensors.water.set_state(target)
-		return 'ok'
-	else:
-		abort(403)
-
-@hardware_methods.route('/getWater')
-def get_water():
-	w_state = current_app.sensors.water.get_state()[0]
-	return jsonify(water_on=w_state)
 
 @hardware_methods.route('/getTempHistory')
 def get_temp_history():
@@ -113,12 +67,16 @@ def set_parameters():
 		for k,v in data.items():
 			floaty_dict[k] = float(v)
 
-		with open('static/config/sensors_config.json', 'w') as file:
+		with open('static/config/thresholds.json', 'w') as file:
 			file.write(json.dumps(floaty_dict))
-		current_app.sensors.update_thresholds()
+		current_app.sensors.update_thresholds(floaty_dict)
 		return 'ok'
 	else:
 		abort(403)
+
+@hardware_methods.route('/getParameters')
+def get_parameters():
+	return fread('static/config/thresholds.json')
 
 @hardware_methods.route('/getReadings', methods = ['POST'])
 def export_readings():
@@ -139,23 +97,7 @@ def export_actuators():
 		d_to = data['to']
 		return json.dumps(current_app.db.get_actuators_records(d_from, d_to))
 	else:
-		abort(403)
-
-@hardware_methods.route('/waterCycle') #for testing
-def do_water_cycle():
-	if isAuthorized():
-		current_app.sensors.water.water_cycle()
-		return 'ok'
-	else:
-		abort(403)
-
-@hardware_methods.route('/sensorsCycle') #for testing
-def do_sensors_cycle():
-	if isAuthorized():
-		current_app.sensors.cycle()
-		return 'ok'
-	else:
-		abort(403)
+		abort(403)		
 
 @hardware_methods.route('/getRpiTemp')
 def get_rpi_temp():
@@ -201,7 +143,7 @@ def shutdown_server():
 @hardware_methods.route('/poweroff') #rpi
 def poweroff():
 	if isAdmin():
-		soft_clean_up()
+		current_app.clean_up()
 		os.system('/usr/bin/sudo /sbin/poweroff')
 		return 'ok'
 	else:
@@ -210,16 +152,33 @@ def poweroff():
 @hardware_methods.route('/reboot')
 def reboot():
 	if isAdmin():
-		soft_clean_up()
+		current_app.clean_up()
 		os.system('/usr/bin/sudo /sbin/reboot')
 		return 'ok'
 	else:
 		abort(403)
+
+@hardware_methods.route('/waterCycle') #for testing
+def do_water_cycle():
+	if isAuthorized():
+		current_app.sensors.water.water_cycle()
+		return 'ok'
+	else:
+		abort(403)
+
+@hardware_methods.route('/sensorsCycle') #for testing
+def do_sensors_cycle():
+	if isAuthorized():
+		current_app.sensors.cycle()
+		return 'ok'
+	else:
+		abort(403)
+
+@hardware_methods.route('/getSnapshot') #for testing
+def get_snapshot():
+	if isAuthorized():
+		current_app.sensors.take_snapshot()
+		return 'ok'
+	else:
+		abort(403)		
 		
-def soft_clean_up():
-	current_app.access_logger.info('\nShutting down (soft)')
-	current_app.db.clean_up()
-	current_app.homebridge.send_signal(signal.SIGINT)
-	current_app.sensors.clean_up()	
-	
-	

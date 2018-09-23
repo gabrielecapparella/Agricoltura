@@ -1,12 +1,12 @@
 $(document).ready(function(){
-	$.getJSON('/methods/getLastReading', function(data){
+	$.getJSON('/agricoltura/methods/getLastReading', function(data){
 		$('#temp-reading').html(data['temp']);
 		$('#hum-reading').html(data['hum']);
 		$('#moist-reading').html(data['moist']);
 		$('#last-reading-timestamp').html(data['dt']);
 	});
 
-	$.getJSON('/methods/getActuators', function(data){
+	$.getJSON('/agricoltura/methods/getActuators', function(data){
 		if(data['sensors_on']) { $('#sensors-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
 		if(data['actuators_on']) { $('#actuators-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
 		if(data['light_on']) { $('#light-on').html('on'); }
@@ -20,11 +20,11 @@ $(document).ready(function(){
 		}
 	});
 	
-	$.getJSON('/methods/getParameters', function (data) { 
+	$.getJSON('/agricoltura/methods/getParameters', function (data) { 
 		thresholds = data; 
 
 		function tempHistory() {
-			$.getJSON('/methods/getTempHistory', function (data) {
+			$.getJSON('/agricoltura/methods/getTempHistory', function (data) {
 					Highcharts.stockChart('current-chart', {
 						rangeSelector: {
 							buttons: [
@@ -56,7 +56,7 @@ $(document).ready(function(){
 		}
 
 		function humHistory() {
-			$.getJSON('/methods/getHumHistory', function (data) {
+			$.getJSON('/agricoltura/methods/getHumHistory', function (data) {
 					Highcharts.stockChart('current-chart', {
 						rangeSelector: {
 							buttons: [
@@ -87,7 +87,7 @@ $(document).ready(function(){
 		}
 
 		function moistHistory() {
-			$.getJSON('/methods/getMoistHistory', function (data) {
+			$.getJSON('/agricoltura/methods/getMoistHistory', function (data) {
 				Highcharts.stockChart('current-chart', {
 					rangeSelector: {
 						buttons: [

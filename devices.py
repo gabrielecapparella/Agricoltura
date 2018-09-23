@@ -127,6 +127,10 @@ class SoilMoistureSensor:
 		self.min_v = min_v #100%
 		self.max_v = max_v #0%
 		self.gain = gain
+		self.last_reading = None
+
+	def get_state(self):
+		return self.last_reading
 
 	def read(self): #throws
 		raw_value = self.adc.read_adc(self.channel, self.gain)
@@ -134,20 +138,28 @@ class SoilMoistureSensor:
 		perc = round(abs(100-perc), 1)
 		if perc<0: perc = 0
 		elif perc>100: perc = 100
+		self.last_reading = perc
 		return perc
 
 class DHT22:
 	def __init__(self, pin, attempts=3):
 		self.pin = pin
 		self.attempts = attempts
+		self.last_reading = None
+
+	def get_state(self):
+		return self.last_reading
 
 	def read(self): #throws
+		reading = [None, None]
 		for attempt in range(self.attempts):
 			h,t = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, self.pin)
 			if h!=None and t!=None and h<=100:
-				return [round(t, 1),round(h, 1)]
+				reading = [round(t, 1),round(h, 1)]
+				break
 			time.sleep(5)
-		return [None, None]
+		self.last_reading = reading
+		return reading
 
 class IP_Camera:
 	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1):
@@ -165,7 +177,7 @@ class IP_Camera:
 		now = sensors_utils.get_now()
 		folder = self.snapshot_dir+now.strftime("%Y-%m-%d")
 		filename = folder+now.strftime("%Y-%m-%d_%H-%M-%S")+'_'+self.name+'.jpg'
-		os.mkdirs(folder,exist_ok=True)
+		os.makedirs(folder,exist_ok=True)
 
 		cmd = 'ffmpeg -y -rtsp_transport tcp -i "rtsp://'+self.usr+':'+self.pwd+'@'+self.ip+'/11" -frames 1 '+filename
 		t = threading.Thread(target=self.call_ffmpeg, args=(cmd,))

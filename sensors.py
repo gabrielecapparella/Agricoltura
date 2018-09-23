@@ -7,11 +7,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import json
 import datetime
-from dateutil import tz
 import devices as devs
 from queue import Queue
 import threading
 import sensors_utils
+
 
 class Sensors:
 	def __init__(self):
@@ -19,7 +19,7 @@ class Sensors:
 			self.loggerSetup()
 			self.db = db_utils.DB_Connection()
 
-			self.state = [True,False,False,False,False]	#read,fan,heat,light,water. What is currently on
+			self.state = [True, False, False, False, False]	#read,fan,heat,light,water. What is currently on
 			self.active_control = [False]*4				#fan,heating,light,irrigation. What is to be controlled
 			self.cycle_timer = sensors_utils.TimerWrap()
 			self.adc = Adafruit_ADS1x15.ADS1115()
@@ -72,16 +72,16 @@ class Sensors:
 		self.state = False
 
 	def set_state(self, new_state):
+		if new_state[0] and not self.state[0]: self.start()
+		elif not new_state[0]: self.stop()
 		self.state = new_state
-		if new_state[0]: self.start()
-		else: self.stop()
 
 	def get_state(self):
 		return self.state + [self.irrigation.get_state[2]]
 
-	def set_act(self, what:list, *state): 
+	def set_act(self, who: list, *state):
 		try:
-			for name in what:
+			for name in who:
 				dev = self.devices[name]
 				now = sensors_utils.unix_now()
 
@@ -89,12 +89,22 @@ class Sensors:
 				if active_since>0:
 					time = (now-active_since)/1000 #seconds
 					if isinstance(dev, devs.Irrigation): l = time/60*dev.flow
-					else:  l = 0
+					else: l = 0
 					kwh = time*dev.wattage/3600000,
 					cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-					self.db.insert_actuator_record(dev.name, active_since, now, kwh, l, cost)
+					self.db.insert_device_record(dev.name, active_since, now, kwh, l, cost)
 		except Exception as e:
-			self.logger.warning("[Sensors.set_act]: something bad happened, what='{}' state='{}'\n\n{}".format(what, state, e))
+			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, e))
+
+	def get_act_state(self, who=[]):
+		act_state = {}
+		try:
+			for name in who:
+				act_state[name] = self.devices[name].get_state()
+		except Exception as e:
+			self.logger.warning("[Sensors.get_act_state]: something bad happened, what='{}' state='{}'\n\n{}".format(who, e))
+		finally:
+			return act_state
 
 	def do_water_cycle(self, who=[]):
 		if not who: who = self.irrigation
@@ -105,7 +115,7 @@ class Sensors:
 				dev.water_cycle()
 				kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
 				cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-				self.db.insert_actuator_record((name, now, now+dev.water_time*60000, kwh, l, cost))		
+				self.db.insert_device_record((name, now, now+dev.water_time*60000, kwh, l, cost))
 			except Exception as e:
 				self.logger.warning("[Sensors.do_water_cycle]: something bad happened, who='{}'\n\n{}".format(who, e))
 
@@ -117,7 +127,7 @@ class Sensors:
 				if job[0]<=now:
 
 					if job[1]<0 and self.active_control[2]: #additional hours of light
-						to_provide = thresholds['min_light_hours']-sensors_utils.get_day_len()
+						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
 						if to_provide>0: job[1] = to_provide
 						else: continue
 
@@ -126,18 +136,22 @@ class Sensors:
 						dev.on_for_x_min(job[1]*60)
 						kwh = job[1]*dev.wattage/(3600*1000)
 						cost = kwh*self.rates["elec_price"]
-						self.db.insert_actuator_record((name, now, now+job[1]*1000, kwh, 0, cost))			
+						self.db.insert_device_record((name, now, now+job[1]*1000, kwh, 0, cost))
 					if job[3]: job[1]+=job[3]
 		except Exception as e:
-			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, e))				
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, e))
 
-	def update_thresholds(self):
-		with open('static/config/thresholds.json', 'r') as cfg_file:
-			self.thresholds = json.loads(cfg_file.read())
+	def update_thresholds(self, new_th = None):
+		if new_th: self.thresholds = new_th
+		else:
+			with open('static/config/thresholds.json', 'r') as cfg_file:
+				self.thresholds = json.loads(cfg_file.read())
 
-	def update_rates(self):
-		with open('static/config/costs_rates.json', 'r') as rates_file:
-			self.rates = json.loads(rates_file.read())
+	def update_rates(self, new_rates = None):
+		if new_rates: self.rates = new_rates
+		else:
+			with open('static/config/costs_rates.json', 'r') as rates_file:
+				self.rates = json.loads(rates_file.read())
 
 	def read_lights_schedule(self):
 		with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
@@ -157,7 +171,7 @@ class Sensors:
 				hours = job[1]
 				interval = job[2].total_seconds()
 				schedule.append([when, hours, interval])
-			lights_file.write(str(schedule))
+			lights_file.write(str(schedule).replace("'", '"'))
 
 	def start(self):
 		self.logger.info("Initiating...")
@@ -184,7 +198,7 @@ class Sensors:
 			if self.state[0]:
 				readings = self.read_sensors()
 				self.operate(readings)
-				if True in self.state[1:]: next_interval = 1 #check after 1 min instead of standard interval
+				if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
 			self.restart(next_interval)
 		except Exception as e:
 			self.logger.exception(e)
@@ -223,7 +237,7 @@ class Sensors:
 		if (m_max-m_min)>self.thresholds["moist_max_delta"]:
 				self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(m_min, m_max))
 
-		th_min, th_max, th_avg, th_good = [100,101], [-274,-1], [0,0], [0,0]
+		th_min, th_max, th_avg, th_good = [100, 101], [-274, -1], [0, 0], [0, 0]
 		while not q_th.empty():
 			reading = q_th.get()
 			if reading[0] is not None:
@@ -247,7 +261,7 @@ class Sensors:
 		if (th_max[1]-th_min[1])>self.thresholds["dht22_max_hum_delta"]:
 				self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(th_min[1], th_max[1]))
 
-		readings = [self.db.unix_now()] + th_avg + [m_avg]
+		readings = [sensors_utils.unix_now()] + th_avg + [m_avg]
 		self.db.insert_sensors_reading(readings)
 
 		return readings
@@ -303,21 +317,21 @@ class Sensors:
 						if dev['enabled']: self.moist_sensors.append(dev['name'])
 					elif dev['type']=='temp_hum_sensor':
 						if dev['model']=='DHT22':
-							self.devices[dev['name']] =	devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
+							self.devices[dev['name']] = devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
 						elif dev['model']=='SHT31-D':
 							pass #TODO
 						if dev['enabled']: self.temp_hum_sensors.append(dev['name'])
 					elif dev['type']=='fan' and dev['model']=='pwm_fan':
-						self.devices[dev['name']] =	devs.Fan(dev['GPIO_switch_pin'], dev['GPIO_speed_pin'], dev['wattage'], dev['pwm_frequency'])
+						self.devices[dev['name']] = devs.Fan(dev['GPIO_switch_pin'], dev['GPIO_speed_pin'], dev['wattage'], dev['pwm_frequency'])
 						if dev['enabled']: self.fans.append(dev['name'])
 					elif dev['type']=='camera' and dev['model']=='ip_camera':
-						self.devices[dev['name']] =	devs.IP_Camera(dev['name'], dev['user'], dev['password'], dev['ip'], dev['snapshot_dir'], dev['wattage'], dev['snapshot_interval_h'])
+						self.devices[dev['name']] = devs.IP_Camera(dev['name'], dev['user'], dev['password'], dev['ip'], dev['snapshot_dir'], dev['wattage'], dev['snapshot_interval_h'])
 						if dev['enabled']: self.cameras.append(dev['name'])
 					elif dev['type']=='irrigation' and dev['model']=='simple_switch':
-						self.devices[dev['name']] =	devs.Irrigation(dev['GPIO_switch_pin'], dev['wattage'], dev['water_flow'], dev['cycle_water_time'], dev['cycle_wait_time'])
+						self.devices[dev['name']] = devs.Irrigation(dev['GPIO_switch_pin'], dev['wattage'], dev['water_flow'], dev['cycle_water_time'], dev['cycle_wait_time'])
 						if dev['enabled']: self.irrigation.append(dev['name'])
 					elif dev['type']=='heating' and dev['model']=='simple_switch':
-						self.devices[dev['name']] =	devs.Switch(dev['GPIO_switch_pin'], dev['wattage'])
+						self.devices[dev['name']] = devs.Switch(dev['GPIO_switch_pin'], dev['wattage'])
 						if dev['enabled']: self.heating.append(dev['name'])
 					elif dev['type']=='grow_light' and dev['model']=='simple_switch':
 						self.devices[dev['name']] =	devs.GrowLight(dev['GPIO_switch_pin'], dev['wattage'])
@@ -325,4 +339,4 @@ class Sensors:
 					else: raise RuntimeError("There was a problem while parsing device: {}".format(dev))
 				except Exception as e:
 					self.logger.exception("[Sensors.parse_devices]: {}".format(e))
-		print("[Sensors.parse_devices]: {}".format(self.devices))
+		#print("[Sensors.parse_devices]: {}".format(self.devices))

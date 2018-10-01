@@ -25,6 +25,10 @@ def logout():
 def monitor():
 	return render_template('monitor.html', title="Monitor", time=str(time.time()))
 
+@web_interface.route('/devices')
+def devices():
+	return render_template('devices.html', title="Devices")	
+
 @web_interface.route('/control')
 def control():
 	if isAuthorized():

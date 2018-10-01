@@ -21,6 +21,7 @@ master.register_blueprint(flask_hardware_methods.hardware_methods, url_prefix='/
 def setup():
 	global master
 
+	master.config['TEMPLATES_AUTO_RELOAD'] = True
 	with open('static/config/main_app.json', 'r') as cfg_file:
 		master.cfg = json.loads(cfg_file.read())
 	master.secret_key = master.cfg["session_key"]

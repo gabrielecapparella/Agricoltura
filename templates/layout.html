@@ -6,16 +6,27 @@
 
 		<title>{{ title }}</title>
 		
-		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<!-- 		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}"> -->
 		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+<!-- 		<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+<!-- 		<script type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script> -->
 
-		<link rel="icon" href="images/favicon.png">
+<!-- 		<link rel="icon" href="images/favicon.png"> -->
 	</head>
 
 
-	{% block body %}{% endblock %}
+	<body>
+		<nav id="navbar">
+			<ul class="nav-list">
+				<li class="nav-title"><a href="/agricoltura">Agricoltura</a></li>
+				<li class="nav-link"><a href="/agricoltura/monitor">Monitor</a></li>
+				<li class="nav-link"><a href="/agricoltura/control">Control</a></li>
+				<li class="nav-link"><a href="/agricoltura/system">System</a></li>
+				<li class="nav-link"><a href="/agricoltura/devices">Devices</a></li>
+			</ul>
+		</nav>		
+	{% block main %}{% endblock %}
+	</body>
 
 </html>

@@ -1,0 +1,144 @@
+body {
+   position: relative;
+   color: #0C3C60;
+}
+
+#navbar {
+	background-color: #0C3C60;
+}
+
+.my-card {
+	width: 230px;
+	font-size: 14px;
+}
+
+.my-card-title {
+	font-size: 20px;
+	align-items: center;
+	text-align: center;
+}
+
+.my-card-switch {
+	width: 22px;
+	height: 20px;
+}
+
+.my-card-output {
+	width: 50px;
+	height: 22px;
+}
+
+.my-card-output-big {
+	width: 100px;
+	height: 22px;
+}
+
+.my-card-input {
+	background-color: Lavender;
+	width: 60px;
+}
+
+.my-card-input-med {
+	background-color: Lavender;
+	width: 10px;
+}
+
+.my-card-input-big {
+	background-color: Lavender;
+	width: 150px;
+}
+
+.my-btn {
+	background-color: #0C3C60;
+	width: 100px;
+}
+
+.my-btn-small {
+	background-color: #0C3C60;
+	width: 80px;
+
+}
+
+.my-btn-active {
+	background-color: #1369AB;
+}
+
+.colored-section {
+	background-color: AliceBlue;
+}
+
+.chart {
+	width: 600px;
+	height: 300px;
+}
+
+.cam-snapshot {
+	align-items: center;
+	text-align: center;
+	max-width: 600px;
+	min-width: 300px;
+	height: auto;
+}
+
+.flexbox {
+	display:flex;
+	justify-content:center;
+	align-items: center;
+	flex-flow: column;
+}
+
+.toggle-button {
+	border:1px solid black;
+	display: flex;
+	cursor: pointer;
+	align-items: center;
+	text-align: center;
+}
+
+.toggle-button * {	width: 20px; height: 18px; }
+.one, .two {border-left: 1px solid black;}
+
+.toggle-button .zero { background-color: #dc3545;}
+.toggle-button .one, .two { background-color: transparent;}
+
+.toggle-button-on .one { background-color: #28a745; }
+.toggle-button-on .zero, .two{ background-color: transparent; }
+
+.toggle-button-two .two { background-color: #28a745; }
+.toggle-button-two .zero, .one { background-color: transparent; }
+
+.last-something {
+	font-size: 12px;
+}
+
+#current-log {
+	font-size: 12px;
+	width: 650px;
+	height: 350px;
+	text-align: left;
+	background-color: AliceBlue;
+	color: #0C3C60;
+}
+
+.progress, #storage {
+	height: 25px;	
+}
+
+.my-checkbox {
+	width: 22px;
+	height: 22px;
+}
+
+.checked-table-row {
+	background-color: Lavender;
+}
+
+#table-users tbody tr:hover {
+	cursor: pointer;
+	background-color: AliceBlue;
+}
+/*#costs-from, #costs-to {
+	background-color: Lavender;
+	width: 130px;
+}*/
+

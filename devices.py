@@ -185,8 +185,8 @@ class IP_Camera:
 		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
 
 	def call_ffmpeg(self, cmd):
-		sub = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-		self.last_returncode = sub.returncode
+		sub = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+		self.last_returncode = sub.wait()
 
 	def stop(self):
 		self.interval = -1

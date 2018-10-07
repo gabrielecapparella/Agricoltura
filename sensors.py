@@ -309,34 +309,48 @@ class Sensors:
 				self.set_act(self.irrigation, False)
 
 	def parse_devices(self):
-		with open('static/config/devices.json', 'r') as devs_file:
-			for dev in json.loads(devs_file.read()):
-				try:
-					if dev['type']=='soil_moisture_sensor' and dev['model']=='generic_analog':
+		try:
+			with open('static/config/devices.json', 'r') as devs_file:
+				devs = json.loads(devs_file.read()):
+
+				for dev in devs['soil_moisture_sensors']:
+					if dev['model']=='generic_analog':
 						self.devices[dev['name']] = devs.SoilMoistureSensor(self.adc, dev['adc_channel'], dev['100_voltage'], dev['0_voltage'], dev['adc_gain'])
-						if dev['enabled']: self.moist_sensors.append(dev['name'])
-					elif dev['type']=='temp_hum_sensor':
-						if dev['model']=='DHT22':
-							self.devices[dev['name']] = devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
-						elif dev['model']=='SHT31-D':
-							pass #TODO
-						if dev['enabled']: self.temp_hum_sensors.append(dev['name'])
-					elif dev['type']=='fan' and dev['model']=='pwm_fan':
+					if dev['enabled']: self.moist_sensors.append(dev['name'])
+
+				for dev in devs['temp_hum_sensors']:
+					if dev['model']=='DHT22':
+						self.devices[dev['name']] = devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
+					elif dev['model']=='SHT31-D':
+						pass #TODO
+					if dev['enabled']: self.temp_hum_sensors.append(dev['name'])
+
+				for dev in devs['fans']:
+					if dev['model']=='pwm_fan':
 						self.devices[dev['name']] = devs.Fan(dev['GPIO_switch_pin'], dev['GPIO_speed_pin'], dev['wattage'], dev['pwm_frequency'])
-						if dev['enabled']: self.fans.append(dev['name'])
-					elif dev['type']=='camera' and dev['model']=='ip_camera':
+					if dev['enabled']: self.fans.append(dev['name'])
+
+				for dev in devs['cameras']:
+					if dev['model']=='ip_camera':
 						self.devices[dev['name']] = devs.IP_Camera(dev['name'], dev['user'], dev['password'], dev['ip'], dev['snapshot_dir'], dev['wattage'], dev['snapshot_interval_h'])
-						if dev['enabled']: self.cameras.append(dev['name'])
-					elif dev['type']=='irrigation' and dev['model']=='simple_switch':
+					if dev['enabled']: self.cameras.append(dev['name'])
+
+				for dev in devs['irrigation']:
+					if dev['model']=='simple_switch':
 						self.devices[dev['name']] = devs.Irrigation(dev['GPIO_switch_pin'], dev['wattage'], dev['water_flow'], dev['cycle_water_time'], dev['cycle_wait_time'])
-						if dev['enabled']: self.irrigation.append(dev['name'])
-					elif dev['type']=='heating' and dev['model']=='simple_switch':
+					if dev['enabled']: self.irrigation.append(dev['name'])
+
+				for dev in devs['heating']:
+					if dev['model']=='simple_switch':
 						self.devices[dev['name']] = devs.Switch(dev['GPIO_switch_pin'], dev['wattage'])
-						if dev['enabled']: self.heating.append(dev['name'])
-					elif dev['type']=='grow_light' and dev['model']=='simple_switch':
+					if dev['enabled']: self.heating.append(dev['name'])
+
+				for dev in devs['grow_lights']:
+					if dev['model']=='simple_switch':
 						self.devices[dev['name']] =	devs.GrowLight(dev['GPIO_switch_pin'], dev['wattage'])
-						if dev['enabled']: self.grow_lights.append(dev['name'])
-					else: raise RuntimeError("There was a problem while parsing device: {}".format(dev))
-				except Exception as e:
-					self.logger.exception("[Sensors.parse_devices]: {}".format(e))
+					if dev['enabled']: self.grow_lights.append(dev['name'])
+
+		except Exception as e:
+			self.logger.exception("[Sensors.parse_devices]: {}".format(e))
+
 		#print("[Sensors.parse_devices]: {}".format(self.devices))

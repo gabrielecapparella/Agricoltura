@@ -3,6 +3,7 @@ letsencrypt/
 homebridge/
 *.log
 hw_test.py
+simple_flask.py
 certs/
 photos/
 ip_camera.json

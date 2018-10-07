@@ -1,4 +1,115 @@
 {% extends "layout.html" %}
 {% block main %}
+		<section id="dev-cards">
+			<h1 class="sec-title">Devices</h1> <!-- posso semplicemente nascondere le card vuote -->
+			<div class="cards">
+				<div class="card">
+					<div class="card-title">Temperature</div>
+					<div class="card-value">25°C</div>
+					<div class="card-item">
+						<div class="card-item-name">SHT-31_1</div>
+						<div class="card-output">23.9°C</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">SHT-31_2</div>
+						<div class="card-output">26.1°C</div>						
+					</div>				
+				</div>
 
+				<div class="card">
+					<div class="card-title">Humidity</div>
+					<div class="card-value">70%</div>
+					<div class="card-item">
+						<div class="card-item-name">SHT-31_1</div>
+						<div class="card-output">68.0%</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">SHT-31_2</div>
+						<div class="card-output">72.0%</div>						
+					</div>			
+				</div>
+
+				<div class="card">
+					<div class="card-title">Soil Moisture</div>
+					<div class="card-value">45%</div>
+					<div class="card-item">
+						<div class="card-item-name">Sodial_c_1</div>
+						<div class="card-output">40.3%</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">Sodial_c_2</div>
+						<div class="card-output">50.8%</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">Sodial_c_3</div>
+						<div class="card-output">45.8%</div>						
+					</div>								
+				</div>
+			</div>
+			<div class="cards">
+				<div class="card">
+					<div class="card-title">Fan</div>
+					<div class="red card-act-switch">OFF</div>
+					<div class="card-item">
+						<div class="card-item-name">Main fan</div>
+						<div class="toggle-button">
+							<div id="fan-zero" class="zero"></div>
+							<div id="fan-one" class="one"></div>
+							<div id="fan-two" class="two"></div>
+						</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">#2</div>
+						<div class="toggle-button">
+							<div id="fan-zero" class="zero"></div>
+							<div id="fan-one" class="one"></div>
+							<div id="fan-two" class="two"></div>
+						</div>						
+					</div>					
+				</div>
+
+				<div class="card">
+					<div class="card-title">Heating</div>
+					<div class="green card-act-switch">ON</div>
+					<div class="card-item">
+						<div class="card-item-name">Main ggggggggggggggggfan</div>
+						<div class="toggle-button">
+							<div class="zero"></div>
+							<div class="one"></div>
+						</div>						
+					</div>
+					<div class="card-item">
+						<div class="card-item-name">#2</div>
+						<div class="toggle-button">
+							<div class="zero"></div>
+							<div class="one"></div>
+						</div>						
+					</div>					
+				</div>
+
+				<div class="card">
+					<div class="card-title">Grow Lights</div>
+					<div class="red card-act-switch">OFF</div>
+					<div class="card-item">
+						<div class="card-item-name">Halogen_140W</div>
+						<div class="toggle-button">
+							<div class="zero"></div>
+							<div class="one"></div>
+						</div>						
+					</div>					
+				</div>
+			</div>
+			<div class="cards">
+				<div class="card">
+					<div class="card-title">Camera_1</div>
+					<div class="card-cam-snapshot"></div>
+				</div>			
+			</div>
+			<br>
+			<br>
+			<br>
+			<br>
+			<br>
+			<br>
+		</section>
 {% endblock %}

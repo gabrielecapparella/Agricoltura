@@ -7,6 +7,7 @@
 		<title>{{ title }}</title>
 		
 <!-- 		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}"> -->
+		<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
 		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
 <!-- 		<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
@@ -18,13 +19,11 @@
 
 	<body>
 		<nav id="navbar">
-			<ul class="nav-list">
-				<li class="nav-title"><a href="/agricoltura">Agricoltura</a></li>
-				<li class="nav-link"><a href="/agricoltura/monitor">Monitor</a></li>
-				<li class="nav-link"><a href="/agricoltura/control">Control</a></li>
-				<li class="nav-link"><a href="/agricoltura/system">System</a></li>
-				<li class="nav-link"><a href="/agricoltura/devices">Devices</a></li>
-			</ul>
+			<a class="nav-title" href="/agricoltura">Agricoltura</a>
+			<a class="nav-link" href="/agricoltura/monitor">Monitor</a>
+			<a class="nav-link" href="/agricoltura/control">Control</a>
+			<a class="nav-link" href="/agricoltura/system">System</a>
+			<a class="nav-link" href="/agricoltura/devices">Devices</a>
 		</nav>		
 	{% block main %}{% endblock %}
 	</body>

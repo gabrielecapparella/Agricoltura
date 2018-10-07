@@ -77,7 +77,7 @@ class Sensors:
 		self.state = new_state
 
 	def get_state(self):
-		return self.state + [self.irrigation.get_state[2]]
+		return self.state
 
 	def set_act(self, who: list, *state):
 		try:

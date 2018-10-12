@@ -27,7 +27,16 @@ def monitor():
 
 @web_interface.route('/devices')
 def devices():
-	return render_template('devices.html', title="Devices")	
+	devices = {
+		"th" : current_app.sensors.temp_hum_sensors,
+		"moist" : current_app.sensors.moist_sensors,
+		"fans" : current_app.sensors.fans,
+		"heating" : current_app.sensors.heating,
+		"grow_lights" : current_app.sensors.grow_lights,
+		"irrigation" : current_app.sensors.irrigation,
+		"cameras" : current_app.sensors.cameras
+	}
+	return render_template('devices.html', title="Devices", devs=devices)	
 
 @web_interface.route('/control')
 def control():

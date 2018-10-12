@@ -106,6 +106,16 @@ class Sensors:
 		finally:
 			return act_state
 
+	def get_full_state(self):
+		full_state = {}
+		full_state['moisture_sensors'] = self.get_act_state(self.moist_sensors)
+		full_state['temp_hum_sensors'] = self.get_act_state(self.temp_hum_sensors)
+		full_state['fans'] = self.get_act_state(self.fans)
+		full_state['heating'] = self.get_act_state(self.heating)
+		full_state['grow_lights'] = self.get_act_state(self.grow_lights)
+		full_state['irrigation'] = self.get_act_state(self.irrigation)
+		return full_state
+
 	def do_water_cycle(self, who=[]):
 		if not who: who = self.irrigation
 		for name in who:

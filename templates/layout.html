@@ -24,6 +24,13 @@
 			<a class="nav-link" href="/agricoltura/control">Control</a>
 			<a class="nav-link" href="/agricoltura/system">System</a>
 			<a class="nav-link" href="/agricoltura/devices">Devices</a>
+			<div class="login-out">
+				{% if session.logged_in %}				
+				<a href="yay">Logout</a>
+				{% else %}	
+				<a href="yay">Login</a>
+				{% endif %}
+			</div>
 		</nav>		
 	{% block main %}{% endblock %}
 	</body>

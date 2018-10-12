@@ -17,20 +17,10 @@ def last_reading():
 	dt = dt.strftime("%Y-%m-%d %H:%M:%S")
 	return jsonify(dt=dt, temp=reading[1], hum=reading[2], moist=reading[3])
 
-@hardware_methods.route('/getActuatorsState')
-def get_actuators_state():
-	s = current_app.sensors
-	a_s = s.get_actuators_state
-	act = {}
-	
-	act['temp_hum'] = a_s(s.temp_hum_sensors)
-	act['moist'] = a_s(s.moist_sensors)
-	act['fans'] = a_s(s.fans)
-	act['heating'] = a_s(s.heating)
-	act['grow_lights'] = a_s(s.grow_lights)
-	act['irrigation'] = a_s(s.irrigation)
-
-	return json.dumps(act)
+@hardware_methods.route('/getFullState')
+def get_full_state():
+	state = current_app.sensors.get_full_state()
+	return json.dumps(state)
 
 @hardware_methods.route('/setActuators')		
 def setActuator():
@@ -41,10 +31,13 @@ def setActuator():
 	else:
 		abort(403)	
 
-@hardware_methods.route('/getActuatorsCfg')
-def get_actuators_cfg():	
-	with open('static/config/devices.json', 'r') as devs_file:
-		return devs_file.read()
+@hardware_methods.route('/getDevicesCfg')
+def get_actuators_cfg():
+	if isAuthorized():
+		with open('static/config/devices.json', 'r') as devs_file:
+			return devs_file.read()
+	else:
+		abort(403)
 
 @hardware_methods.route('/setSensorsState', methods = ['POST'])
 def set_sensors_state():
@@ -161,7 +154,7 @@ def reboot():
 @hardware_methods.route('/waterCycle') #for testing
 def do_water_cycle():
 	if isAuthorized():
-		current_app.sensors.water.water_cycle()
+		current_app.sensors.do_water_cycle()
 		return 'ok'
 	else:
 		abort(403)
@@ -174,11 +167,11 @@ def do_sensors_cycle():
 	else:
 		abort(403)
 
-@hardware_methods.route('/getSnapshot') #for testing
-def get_snapshot():
-	if isAuthorized():
-		current_app.sensors.take_snapshot()
-		return 'ok'
-	else:
-		abort(403)		
+# @hardware_methods.route('/getSnapshot') #for testing
+# def get_snapshot():
+# 	if isAuthorized():
+# 		current_app.sensors.take_snapshot()
+# 		return 'ok'
+# 	else:
+# 		abort(403)		
 		

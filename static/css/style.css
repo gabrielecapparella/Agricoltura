@@ -35,17 +35,30 @@ body {
 
 .nav-link {
 	font-size: 18px;
-	margin-left: 20px;
+	margin: 0 10px;
 }
 
-.login-out {
+.login-button {
 	border: 1px solid white;
 	border-radius: 2px;
 	font-size: 14px;
 	text-align: center;
-/*	width: 60px;*/
-	margin-left: 20px;
+	margin-left: 10px;
 	padding: 3px;
+	background-color: #0C3C60;
+	color: white;
+}
+
+.blue-button {
+	border: 1px solid #041726;
+	border-radius: 2px;
+	text-align: center;
+	margin: 0 auto;
+	padding: 3px;
+	background-color: #0C3C60;
+	color: white;
+	width: 60px;
+	cursor: pointer;
 }
 
 h1.sec-title {
@@ -110,9 +123,9 @@ section {
 .card-act-switch {
 	border: 1px solid black;
 	border-radius: 2px;
-	font-size: 26px;
+	font-size: 16px;
 	text-align: center;
-	width: 60px;
+	width: 50px;
 	margin: 0 auto 20px;
 	cursor: pointer;
 }
@@ -162,3 +175,65 @@ section {
 
 .toggle-button-two .two { background-color: #28a745; }
 .toggle-button-two .zero, .one { background-color: transparent; }
+
+#dev-table-container {
+/*	border:1px solid black;
+	border-radius: 2px;*/
+	width: 600px;
+	margin: 10px;
+}
+
+#dev-table {
+	border-collapse: collapse;
+	width: 100%;
+	padding: 10px;
+}
+
+#dev-table, th {
+	border:1px solid gray;
+	padding: 10px;
+}
+
+#dev-table td {
+	padding: 8px;
+	border:1px solid gray;
+}
+
+#dev-table td:nth-child(4) {
+	text-align:center;
+}
+
+#dev-table tbody tr:hover {
+	cursor: pointer;
+	background-color: AliceBlue;
+}
+
+.checked-table-row {
+	background-color: Lavender;
+}
+
+#dev-raw-config {
+	border:1px solid black;
+	min-width: 300px;
+	min-height: 250px;
+	margin: 10px;
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#dev-raw-config>textarea {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	margin-bottom: 10px;
+}
+
+#edit-cfg-result {
+	display: none;
+}
+
+/*#dev-table th {
+	padding: 10px 0;
+}*/

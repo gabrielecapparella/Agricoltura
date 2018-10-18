@@ -1,0 +1,311 @@
+{% extends "layout.html" %}
+{% block body %}
+	<body data-spy="scroll" data-target="#navbar" data-offset="70">
+		<h1>Control</h1>
+
+		<nav id="navbar" class="navbar navbar-expand-sm navbar-dark fixed-top">
+			<a class="navbar-brand" href="#">Control</a>
+			<span class="navbar-text ml-auto">Hi, {{ user }}</span>
+			<ul class="nav navbar-nav ml-5">
+				<li class="nav-item">
+					<a class="nav-link" href="#status">Status</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#param">Parameters</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#costs">Costs</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#export">Export</a>
+				</li>
+			</ul>
+			<a href="{{ url_for('web_interface.index') }}" class="btn btn-outline-light btn-sm ml-2" role="button">Index</a>
+		</nav>
+		<section id="status" class="container-fluid text-center p-5">
+			<div class="row justify-content-center m-3">
+				<h3>Status</h3>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-auto border rounded border-dark m-4 my-card">
+					<div class="row border-dark border-bottom p-2 my-card-title">
+						<div class="col-8">Sensors</div>
+						<div id="sensors-toggle" class="col-auto toggle-button p-0">
+							<div class="zero"></div>
+							<div class="one"></div>
+						</div>
+					</div>
+					<div class="row p-1 pt-3">
+						<div class="col-7 text-left pl-4 mr-2">Temperature</div>
+						<div id="temp-reading" class="col-auto p-0 border border-dark my-card-output mr-1">-</div>°C
+					</div>
+					<div class="row p-1">
+						<div class="col-7 text-left pl-4 mr-2">Humidity</div>
+						<div id="hum-reading" class="col-auto p-0 border border-dark my-card-output mr-1">-</div>%
+					</div>
+					<div class="row p-1 pb-3">
+						<div class="col-7 text-left pl-4 mr-2">Soil moisture</div>
+						<div id="moist-reading" class="col-auto p-0 border border-dark my-card-output mr-1">-</div>%
+					</div>
+				</div>
+
+				<div class=" col-auto border rounded border-dark m-4 my-card">
+					<div class="row border-dark border-bottom p-2 my-card-title">
+						<div class="col-8">Actuators</div>
+						<div id="actuators-toggle" class="col-auto toggle-button p-0">
+							<div class="zero"></div>
+							<div class="one"></div>
+						</div>
+					</div>
+					<div class="row p-1 pt-3">
+						<div class="col-7 text-left pl-4">Light</div>
+						<div class="col-auto p-0">
+							<div id="light-toggle" class="toggle-button">
+								<div class="zero"></div>
+								<div class="one"></div>
+							</div>
+						</div>
+					</div>
+					<div class="row p-1">
+						<div class="col-7 text-left pl-4">Irrigation</div>
+						<div class="col-auto p-0">
+							<div id="irrigation-toggle" class="toggle-button">
+								<div class="zero"></div>
+								<div class="one"></div>
+							</div>
+						</div>
+					</div>
+					<div class="row p-1 pb-3">
+						<div class="col-7 text-left pl-4">Fan</div>
+						<div class="col-auto p-0">
+							<div id="fan-toggle" class="toggle-button">
+								<div id="fan-zero" class="zero"></div>
+								<div id="fan-one" class="one"></div>
+								<div id="fan-two" class="two"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="param" class="container-fluid text-center p-5 colored-section">
+			<h3>Parameters</h3>
+			<div class="container border rounded border-dark text-right mt-4 mb-4" style="width: 500px">
+				<form>
+					<div class="row pb-1 pt-3">
+						<label for="interval-min" class="col-4 col-form-label col-form-label-sm pr-1">Cycles' interval (m):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="interval-min" min="1" value="0">
+						</div>
+
+						<label for="min-temp" class="col-4 col-form-label col-form-label-sm pr-1">Min temperature (°C):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="min-temp" value="0">
+						</div>
+					</div>
+
+					<div class="row pb-1">
+						<label for="max-hum" class="col-4 col-form-label col-form-label-sm pr-1">Max humidity (%):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="max-hum" min="0" max="100" value="0">
+						</div>
+
+						<label for="max-temp" class="col-4 col-form-label col-form-label-sm pr-1">Max temperature (°C):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="max-temp" value="0">
+						</div>
+					</div>
+
+					<div class="row pb-1">
+						<label for="min-moist" class="col-4 col-form-label col-form-label-sm pr-1">Min soil moisture (%):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="min-moist" min="0" max="100" value="0">
+						</div>
+
+						<label for="min-light" class="col-4 col-form-label col-form-label-sm pr-1">Min light-hours (h):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="min-light" min="0" max="24" value="0">
+						</div>
+					</div>
+
+					<div class="row pb-3">
+						<label for="max-moist" class="col-4 col-form-label col-form-label-sm pr-1">Max soil moisture (%):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="max-moist" min="0" max="100" value="0">
+						</div>
+
+						<label for="cam-h" class="col-4 col-form-label col-form-label-sm pr-1">Snapshot interval (h):</label>
+						<div class="col-2">
+							<input type="number" class="form-control form-control-sm border border-dark my-card-input" id="cam-h" min="0" value="0">
+						</div>
+					</div>
+					<div class="row border-dark border-top p-2">
+						<div class="col text-center">
+							<a id="update-param" class="btn text-light btn-sm my-btn">Update</a>
+							<a id="reset" class="btn text-light btn-sm my-btn">Reset</a>
+						</div>
+					</div>
+				</form>
+			</div>
+			<p id="set-param-result" class="text-monospace"></p>
+		</section>
+
+		<section id="costs" class="container-fluid text-center p-5">
+			<h3>Costs</h3>
+
+			<div class="row m-4">
+				<div class="col-auto border rounded border-dark m-2 my-card ml-auto">
+					<div class="row p-1 pt-2">
+						<div class="col-6 text-left pl-3 py-1">Electricity</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="elec-price" min="0" value="0">
+						<p class="text-center mb-0 py-1">€/KWh</p>
+					</div>
+					<div class="row p-1">
+						<div class="col-6 text-left pl-3 py-1">Water</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="water-price" min="0" value="0">
+						<p class="text-center mb-0 py-1">€/mc</p>
+					</div>
+					<div class="row p-1">
+						<div class="col-6 text-left pl-3 py-1">Fan</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="fan-w" min="0" value="0">
+						<p class="text-center mb-0 py-1">W</p>
+					</div>
+					<div class="row p-1">
+						<div class="col-6 text-left pl-3 py-1">Water Pump</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="pump-w" min="0" value="0">
+						<p class="text-center mb-0 py-1">W</p>
+					</div>
+					<div class="row p-1">
+						<div class="col-6 text-left pl-3 py-1">Water Flow</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="pump-f" min="0" value="0">
+						<p class="text-center mb-0 py-1">l/min</p>
+					</div>
+					<div class="row p-1">
+						<div class="col-6 text-left pl-3 py-1">Lightbulb</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="light-w" min="0" value="0">
+						<p class="text-center mb-0 py-1">W</p>
+					</div>
+					<div class="row p-1 pb-2">
+						<div class="col-6 text-left pl-3 py-1">Server</div>
+						<input type="number" class="form-control form-control-sm border border-dark my-card-input mr-1" id="server-w" min="0" value="0">
+						<p class="text-center mb-0 py-1">W</p>
+					</div>
+					<div class="row p-2 border-dark border-top">
+						<a id="update-rates" class="btn text-light btn-sm my-btn m-auto">Update</a>
+					</div>
+				</div>
+				<div class="col-auto m-2 mr-auto my-auto border rounded border-dark p-2" style="width: 450px">
+					<div class="row-auto border border-dark p-0">
+						<table id="table-costs" class="table-sm table-hover table-bordered m-0 w-100">
+							<thead>
+								<tr>
+									<th scope="col">Entry</th>
+									<th scope="col">Quantity</th>
+									<th scope="col">Avg Daily Cost</th>
+									<th scope="col">Total Cost</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Electricity</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+								<tr>
+									<td>Water</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+								<tr>
+									<td>Fan</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+								<tr>
+									<td>Pump</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+								<tr>
+									<td>Lightbulb</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+								<tr>
+									<td>Server</td><td>-</td><td>-</td><td>-</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="row py-2 px-4">
+						<label for="costs-from" class="col-form-label mb-2 col-form-label-sm p-1">From:</label>
+						<div class="col mx-0 px-0">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="costs-from">
+						</div>
+						<label for="costs-to" class="col-form-label col-form-label-sm p-1">To:</label>
+						<div class="col mx-0 px-0">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="costs-to">
+						</div>
+					</div>
+					<div class="row">
+						<a id="calculate-costs" class="btn text-light btn-sm my-btn m-auto">Calculate</a>
+					</div>
+				</div>
+			</div>
+			<p id="set-rates-result" class="text-monospace"></p>
+		</section>
+
+		<section id="export" class="container-fluid text-center p-5 colored-section">
+			<h3>Export Data</h3>
+
+			<div class="row justify-content-center">
+				<div class="col-auto border rounded border-dark m-4 my-card">
+					<div class="row border-dark border-bottom p-2 my-card-title">
+						<div class="col">Sensors' readings</div>
+					</div>
+					<div class="row pb-1 pt-3 pb-1">
+						<div class="col-3 pr-1 text-right">
+							<label for="sensors-from" class="col-form-label mb-2 col-form-label-sm">From:</label>
+						</div>
+						<div class="col-9 pl-1">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="sensors-from">
+						</div>
+					</div>
+					<div class="row mb-1">
+						<div class="col-3 pr-1 text-right">
+							<label for="sensors-to" class="col-form-label col-form-label-sm">To:</label>
+						</div>
+						<div class="col-9 pl-1 pb-3">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="sensors-to">
+						</div>
+					</div>
+					<div class="row border-dark border-top p-2">
+						<div class="col text-center">
+							<a id="sensors-export" class="btn text-light btn-sm my-btn">Download</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-auto border rounded border-dark m-4 my-card">
+					<div class="row border-dark border-bottom p-2 my-card-title">
+						<div class="col">Actuators' records</div>
+					</div>
+					<div class="row pb-1 pt-3 pb-1">
+						<div class="col-3 pr-1 text-right">
+							<label for="actuators-from" class="col-form-label mb-2 col-form-label-sm">From:</label>
+						</div>
+						<div class="col-9 pl-1">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="actuators-from">
+						</div>
+					</div>
+					<div class="row mb-1">
+						<div class="col-3 pr-1 text-right">
+							<label for="actuators-to" class="col-form-label col-form-label-sm">To:</label>
+						</div>
+						<div class="col-9 pl-1 pb-3">
+							<input type="date" class="form-control form-control-sm border border-dark my-card-input-big" id="actuators-to">
+						</div>
+					</div>
+					<div class="row border-dark border-top p-2">
+						<div class="col text-center">
+							<a id="actuators-export" class="btn text-light btn-sm my-btn">Download</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<script type="text/javascript" src="{{ url_for('static', filename='js/control.js') }}"></script>
+	</body>
+
+{% endblock %}

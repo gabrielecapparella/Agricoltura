@@ -3,7 +3,6 @@
 		<section id="dev-cards">
 			<h1 class="sec-title">Devices</h1>
 			<div class="cards">
-
 				{% if devs['th'] %}
 				<div id="card-temp" class="card">
 					<div class="card-title">Temperature</div>
@@ -44,7 +43,7 @@
 				{% if devs['fans'] %}
 				<div id="card-fan" class="card">
 					<div class="card-title">Ventilation</div>
-					<div class="card-act-switch">-</div>
+					<div class="green card-act-switch">AUTO</div>
 					{% for name in devs['fans'] %}
 					<div id="item-{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
@@ -60,7 +59,7 @@
 				{% if devs['heating'] %}
 				<div id="card-heating" class="card">
 					<div class="card-title">Heating</div>
-					<div class="card-act-switch">-</div>
+					<div class="red card-act-switch">MAN</div>
 					{% for name in devs['heating'] %}
 					<div id="item-{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
@@ -114,6 +113,41 @@
 			</div>
 			{% endif %}
 		</section>
+		<section id="dev-config">
+			<h1 class="sec-title">Configurations</h1>
+			<div class="cards">
+				<div id="dev-table-container">
+					<table id="dev-table">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Type</th>
+								<th>Model</th>
+								<th>Enabled</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for type, t_devs in raw_devs.items() %}
+							{% for dev in t_devs %}
+							<tr data-dev-index="{{loop.index0}}">
+								<td>{{dev["name"]}}</td>
+								<td class="dev-type">{{type}}</td>
+								<td>{{dev["model"]}}</td>
+								<td>{{dev["enabled"]}}</td>
+							</tr>
+							{% endfor %}
+							{% endfor %}	
+						</tbody>
+					</table>
+				</div>
+				<div id="dev-raw-config">
+					<textarea>
+					</textarea>
+					<div id="edit-dev-cfg" class="blue-button">Save</div>
+					<p id="edit-cfg-result" class="text-monospace"></p>
+				</div>
+			</div>
+		</section>
 		<br>
 		<br>
 		<br>
@@ -124,7 +158,6 @@
 		<br>
 		<br>
 		<br>
-		<br>
-		<br>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/devices.js') }}"></script>
 		
 {% endblock %}

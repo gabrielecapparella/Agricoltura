@@ -321,7 +321,7 @@ class Sensors:
 	def parse_devices(self):
 		try:
 			with open('static/config/devices.json', 'r') as devs_file:
-				devs = json.loads(devs_file.read()):
+				devs = json.loads(devs_file.read())
 
 				for dev in devs['soil_moisture_sensors']:
 					if dev['model']=='generic_analog':

@@ -2,40 +2,59 @@
 
 from flask import current_app, Blueprint, jsonify, abort, request, session
 import datetime
-from flask_software_methods import isAuthorized, isAdmin, datetime_tz, fread
+from flask_software_methods import isAuthorized, isAdmin, fread
 import re
 import json
 import os
-import signal
+#import signal
 
 hardware_methods = Blueprint('hardware_methods', __name__)
 
-@hardware_methods.route('/getLastReading')
-def last_reading():
-	reading = current_app.db.get_last_reading()
-	dt = datetime_tz(datetime.datetime.fromtimestamp(reading[0]/1000))
-	dt = dt.strftime("%Y-%m-%d %H:%M:%S")
-	return jsonify(dt=dt, temp=reading[1], hum=reading[2], moist=reading[3])
+# @hardware_methods.route('/getLastReading')
+# def last_reading():
+# 	reading = current_app.db.get_last_reading()
+# 	dt = datetime_tz(datetime.datetime.fromtimestamp(reading[0]/1000))
+# 	dt = dt.strftime("%Y-%m-%d %H:%M:%S")
+# 	return jsonify(dt=dt, temp=reading[1], hum=reading[2], moist=reading[3])
 
 @hardware_methods.route('/getFullState')
 def get_full_state():
 	state = current_app.sensors.get_full_state()
 	return json.dumps(state)
 
-@hardware_methods.route('/setActuators')		
+@hardware_methods.route('/setActuator', methods = ['POST'])
 def setActuator():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		current_app.sensors.set_act(data[0], *data[1])
-		return 'ok'
+		print(data['target_state'])
+		current_app.sensors.set_act([data['name']], *data['target_state'])
+		return json.dumps(current_app.sensors.get_dev_state(data['name']))
 	else:
-		abort(403)	
+		abort(403)
 
 @hardware_methods.route('/getDevicesCfg')
-def get_actuators_cfg():
+def get_devices_cfg():
 	if isAuthorized():
 		with open('static/config/devices.json', 'r') as devs_file:
 			return devs_file.read()
+	else:
+		abort(403)
+
+@hardware_methods.route('/editDevCfg', methods = ['POST'])
+def edit_device_cfg():
+	if isAuthorized():
+		data = request.get_json(force=True)
+		current_app.sensors.update_device(data['name'], data['cfg'])
+
+		with open('static/config/devices.json', 'r+') as devs_file:
+			devs = json.loads(devs_file.read())
+			devs[data['index']] = data['cfg']
+			devs_file.seek(0)
+			devs_file.write(json.dumps(devs, indent=4))
+			devs_file.truncate()
+
+		return 0 #0,1,2
+
 	else:
 		abort(403)
 
@@ -90,7 +109,7 @@ def export_actuators():
 		d_to = data['to']
 		return json.dumps(current_app.db.get_actuators_records(d_from, d_to))
 	else:
-		abort(403)		
+		abort(403)
 
 @hardware_methods.route('/getRpiTemp')
 def get_rpi_temp():
@@ -173,5 +192,4 @@ def do_sensors_cycle():
 # 		current_app.sensors.take_snapshot()
 # 		return 'ok'
 # 	else:
-# 		abort(403)		
-		
+# 		abort(403)

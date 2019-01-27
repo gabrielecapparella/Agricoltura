@@ -58,7 +58,7 @@ class Irrigation(Switch):
 			if w_state==0: self.timer.reset()
 			return super().off()
 
-	def water_cycle(self):
+	def water_cycle(self, callback=None):
 		ws = self.watering_state
 		if ws==0:
 			print("[Irrigation.water_cycle]: water on.")
@@ -71,6 +71,7 @@ class Irrigation(Switch):
 		elif ws==2:
 			print("[Irrigation.water_cycle]: cycle finished.")
 			self.set_state(False, 0)
+			if callback: callback(self)
 
 class Fan(Switch):
 	def __init__(self, power_pin, speed_pin, wattage, frequency=25000):
@@ -132,6 +133,9 @@ class SoilMoistureSensor:
 	def get_state(self):
 		return self.last_reading
 
+	def set_state(self, state):
+		return False
+
 	def read(self): #throws
 		raw_value = self.adc.read_adc(self.channel, self.gain)
 		perc = (raw_value-self.min_v)*100/(self.max_v-self.min_v)
@@ -149,6 +153,9 @@ class DHT22:
 
 	def get_state(self):
 		return self.last_reading
+
+	def set_state(self, state):
+		return False
 
 	def read(self): #throws
 		reading = [None, None]
@@ -192,4 +199,8 @@ class IP_Camera:
 		self.interval = -1
 		self.timer.reset()
 
+	def get_state(self):
+		return self.timer.remaining()
 
+	def set_state(self, state):
+		return False

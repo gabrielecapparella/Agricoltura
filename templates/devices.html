@@ -3,37 +3,37 @@
 		<section id="dev-cards">
 			<h1 class="sec-title">Devices</h1>
 			<div class="cards">
-				{% if devs['th'] %}
+				{% if devs['temp_hum_sensors'] %}
 				<div id="card-temp" class="card">
 					<div class="card-title">Temperature</div>
-					<div class="card-value">-°C</div>
-					{% for name in devs['th'] %}
-					<div id="item-{{name}}" class="card-item">
+					<div class="card-value">{{devs['averages'][1]}}°C</div>
+					{% for name, state in devs['temp_hum_sensors'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
-						<div class="card-output">-°C</div>						
+						<div class="card-output">{{state[0]}}°C</div>						
 					</div>
 					{% endfor %}		
 				</div>
 
 				<div id="card-hum" class="card">
 					<div class="card-title">Humidity</div>
-					<div class="card-value">-%</div>
-					{% for name in devs['th'] %}
-					<div id="item-{{name}}" class="card-item">
+					<div class="card-value">{{devs['averages'][2]}}%</div>
+					{% for name, state in devs['temp_hum_sensors'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
-						<div class="card-output">-°%</div>						
+						<div class="card-output">{{state[1]}}%</div>						
 					</div>
 					{% endfor %}	
 				</div>
 				{% endif %}
-				{% if devs['moist'] %}
+				{% if devs['soil_moist_sensors'] %}
 				<div id="card-moist" class="card">
 					<div class="card-title">Soil Moisture</div>
-					<div class="card-value">-%</div>
-					{% for name in devs['moist'] %}
-					<div id="item-{{name}}" class="card-item">
+					<div class="card-value">{{devs['averages'][3]}}%</div>
+					{% for name, state in devs['soil_moist_sensors'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
-						<div class="card-output">-°%</div>						
+						<div class="card-output">{{state}}%</div>						
 					</div>
 					{% endfor %}							
 				</div>
@@ -43,14 +43,24 @@
 				{% if devs['fans'] %}
 				<div id="card-fan" class="card">
 					<div class="card-title">Ventilation</div>
+					{% if devs['active_control'][0] %}
 					<div class="green card-act-switch">AUTO</div>
-					{% for name in devs['fans'] %}
-					<div id="item-{{name}}" class="card-item">
+					{% else %}
+					<div class="red card-act-switch">MAN</div>
+					{% endif %}
+					{% for name, state in devs['fans'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
+						{% if not state[0] %}
 						<div class="toggle-button">
-							<div id="fan-zero" class="zero"></div>
-							<div id="fan-one" class="one"></div>
-							<div id="fan-two" class="two"></div>
+						{% elif state[1]<=50 %}
+						<div class="toggle-button-on">
+						{% else %}
+						<div class="toggle-button-two">
+						{% endif %}
+							<div class="zero" data-target="off"></div>
+							<div class="one" data-target="fan-50"></div>
+							<div class="two" data-target="fan-100"></div>
 						</div>	
 					</div>
 					{% endfor %}					
@@ -59,13 +69,21 @@
 				{% if devs['heating'] %}
 				<div id="card-heating" class="card">
 					<div class="card-title">Heating</div>
+					{% if devs['active_control'][1] %}
+					<div class="green card-act-switch">AUTO</div>
+					{% else %}
 					<div class="red card-act-switch">MAN</div>
-					{% for name in devs['heating'] %}
-					<div id="item-{{name}}" class="card-item">
+					{% endif %}
+					{% for name, state in devs['heating'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
+						{% if not state %}
 						<div class="toggle-button">
-							<div class="zero"></div>
-							<div class="one"></div>
+						{% else %}
+						<div class="toggle-button-on">
+						{% endif %}
+							<div class="zero" data-target="off"></div>
+							<div class="one" data-target="on"></div>
 						</div>						
 					</div>
 					{% endfor %}		
@@ -74,13 +92,21 @@
 				{% if devs['grow_lights'] %}
 				<div id="card-glights" class="card">
 					<div class="card-title">Grow Lights</div>
-					<div class="card-act-switch">-</div>
-					{% for name in devs['grow_lights'] %}
-					<div id="item-{{name}}" class="card-item">
+					{% if devs['active_control'][2] %}
+					<div class="green card-act-switch">AUTO</div>
+					{% else %}
+					<div class="red card-act-switch">MAN</div>
+					{% endif %}
+					{% for name, state in devs['grow_lights'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
+						{% if not state %}
 						<div class="toggle-button">
-							<div class="zero"></div>
-							<div class="one"></div>
+						{% else %}
+						<div class="toggle-button-on">
+						{% endif %}
+							<div class="zero" data-target="off"></div>
+							<div class="one" data-target="on"></div>
 						</div>						
 					</div>	
 					{% endfor %}				
@@ -89,13 +115,21 @@
 				{% if devs['irrigation'] %}
 				<div id="card-water" class="card">
 					<div class="card-title">Irrigation</div>
-					<div class="card-act-switch">-</div>
-					{% for name in devs['irrigation'] %}
-					<div id="item-{{name}}" class="card-item">
+					{% if devs['active_control'][3] %}
+					<div class="green card-act-switch">AUTO</div>
+					{% else %}
+					<div class="red card-act-switch">MAN</div>
+					{% endif %}
+					{% for name, state in devs['irrigation'].items() %}
+					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
+						{% if not state[0] %}
 						<div class="toggle-button">
-							<div class="zero"></div>
-							<div class="one"></div>
+						{% else %}
+						<div class="toggle-button-on">
+						{% endif %}
+							<div class="zero" data-target="off"></div>
+							<div class="one" data-target="on"></div>
 						</div>						
 					</div>	
 					{% endfor %}				
@@ -121,22 +155,11 @@
 						<thead>
 							<tr>
 								<th>Name</th>
-								<th>Type</th>
 								<th>Model</th>
 								<th>Enabled</th>
 							</tr>
 						</thead>
-						<tbody>
-							{% for type, t_devs in raw_devs.items() %}
-							{% for dev in t_devs %}
-							<tr data-dev-index="{{loop.index0}}">
-								<td>{{dev["name"]}}</td>
-								<td class="dev-type">{{type}}</td>
-								<td>{{dev["model"]}}</td>
-								<td>{{dev["enabled"]}}</td>
-							</tr>
-							{% endfor %}
-							{% endfor %}	
+						<tbody>	
 						</tbody>
 					</table>
 				</div>
@@ -144,20 +167,11 @@
 					<textarea>
 					</textarea>
 					<div id="edit-dev-cfg" class="blue-button">Save</div>
-					<p id="edit-cfg-result" class="text-monospace"></p>
+					<p id="edit-cfg-result"></p>
 				</div>
 			</div>
 		</section>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
+
 		<script type="text/javascript" src="{{ url_for('static', filename='js/devices.js') }}"></script>
 		
 {% endblock %}

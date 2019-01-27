@@ -1,7 +1,97 @@
 {% extends "layout.html" %}
 {% block main %}
-		<section id="auto-control">
-			<h1 class="sec-title">Devices</h1>
-			
-		</section>		
+		<section id="thresholds">
+			<h1 class="sec-title">Thresholds</h1>
+			<div id="form-thresholds">
+				<ul>
+					<li>
+						<label for="interval-min">Cycles' interval (m):</label>
+						<input type="number" id="interval-min" min="1" value="0">
+					</li>
+					<li>
+						<label for="min-temp">Min temperature (°C):</label>
+						<input type="number" id="min-temp" value="0">
+					</li>
+					<li>
+						<label for="max-temp">Max temperature (°C):</label>
+						<input type="number" id="max-temp" value="0">
+					</li>
+					<li>
+						<label for="max-hum">Max humidity (%):</label>
+						<input type="number" id="max-hum" min="0" max="100" value="0">
+					</li>
+					<li>
+						<label for="min-moist">Min soil moisture (%):</label>
+						<input type="number" id="min-moist" min="0" max="100" value="0">
+					</li>
+					<li>
+						<label for="max-moist">Max soil moisture (%):</label>
+						<input type="number" id="max-moist" min="0" max="100" value="0">
+					</li>
+					<li>
+						<div id="update-params" class="blue-button">Update</div>
+					</li>
+					<li>
+						<div id="reset-params" class="blue-button">Reset</div>
+					</li>
+				</ul>
+			</div>
+			<p id="set-param-result" class="text-monospace"></p>
+		</section>
+
+<!-- 		<section id="light-schedule">
+			<h1 class="sec-title">Light Schedule</h1>
+
+		</section> -->
+
+		<section id="history">
+			<h1 class="sec-title">History</h1>
+			<script type = "text/javascript" src="{{ url_for('static', filename='js/moment.js') }}"></script>
+			<script type = "text/javascript" src="{{ url_for('static', filename='js/moment-timezone-with-data-2012-2022.js') }}"></script>
+			<script type = "text/javascript" src="{{ url_for('static', filename='js/highstock.js') }}"></script>
+
+			<div id="history-chart">
+				<div id="current-chart" class="chart"></div>
+				<div>
+					<div id="temp-chart" class="blue-button">Temperature</div>
+					<div id="hum-chart" class="blue-button">Humidity</div>
+					<div id="moist-chart" class="blue-button">Soil moisture</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="costs">
+			<h1 class="sec-title">Costs</h1>
+<!-- 			<table id="table-costs" class="table-sm table-hover table-bordered m-0 w-100">
+				<thead>
+					<tr>
+						<th scope="col">Entry</th>
+						<th scope="col">Quantity</th>
+						<th scope="col">Avg Daily Cost</th>
+						<th scope="col">Total Cost</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Electricity</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+					<tr>
+						<td>Water</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+					<tr>
+						<td>Fan</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+					<tr>
+						<td>Pump</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+					<tr>
+						<td>Lightbulb</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+					<tr>
+						<td>Server</td><td>-</td><td>-</td><td>-</td>
+					</tr>
+				</tbody>
+			</table> -->
+		</section>
+
 {% endblock %}

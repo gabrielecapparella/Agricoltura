@@ -28,6 +28,7 @@ def setup():
 	loggingSetup()
 	master.logger.debug('[flask_main]: setup')
 	master.boot_time = sensors_utils.unix_now()
+	print("boot time: {}".format(master.boot_time))
 	master.sensors = sensors.Sensors()
 	master.db = db_utils.DB_Connection()
 	master.clean_up = clean_up
@@ -85,6 +86,7 @@ def forbidden(e):
 #if __name__ == '__main__':
 try:
 	setup()
+	master.run(host='0.0.0.0') #REMOVE IF USING GUNICORN
 except Exception as e:
 	master.logger.exception(e)
 	clean_up()

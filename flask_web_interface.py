@@ -11,15 +11,15 @@ web_interface = Blueprint('web_interface', __name__, template_folder='templates'
 @web_interface.route('/')
 def index():
 	return render_template('index.html', title="Agricoltura")
-	
+
 @web_interface.route('/login')
 def login():
 	return render_template('login.html', title="Login")
 
-@web_interface.route('/logout')	
+@web_interface.route('/logout')
 def logout():
 	session.clear()
-	return redirect(url_for('web_interface.index'))	
+	return redirect(url_for('web_interface.index'))
 
 @web_interface.route('/monitor')
 def monitor():
@@ -27,29 +27,21 @@ def monitor():
 
 @web_interface.route('/devices')
 def devices():
-	devices = {
-		"th" : current_app.sensors.temp_hum_sensors,
-		"moist" : current_app.sensors.moist_sensors,
-		"fans" : current_app.sensors.fans,
-		"heating" : current_app.sensors.heating,
-		"grow_lights" : current_app.sensors.grow_lights,
-		"irrigation" : current_app.sensors.irrigation,
-		"cameras" : current_app.sensors.cameras
-	}
-	return render_template('devices.html', title="Devices", devs=devices)	
+	full_state = current_app.sensors.get_full_state()
+	return render_template('devices.html', title="Devices", devs=full_state)
 
 @web_interface.route('/control')
 def control():
 	if isAuthorized():
 		return render_template('control.html', title="Control", user=session['user'])
 	else: abort(403)
-	
+
 @web_interface.route('/manage')
 def system():
 	if isAdmin():
 		return render_template('system.html', title="Manage", user=session['user'])
 	else: abort(403)
-	
+
 @web_interface.route('/snapshot')
 def snapshot():
 	ph = os.listdir('static/photos/')
@@ -59,4 +51,3 @@ def snapshot():
 		return send_file('static/photos/'+last, mimetype='image/jpeg')
 	else:
 		return 'nope'
-

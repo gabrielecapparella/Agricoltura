@@ -50,7 +50,7 @@ def set_rates():
 			floaty_dict[k] = float(v)
 
 		with open('static/config/costs_rates.json', 'w') as file:
-			file.write(json.dumps(floaty_dict))
+			file.write(json.dumps(floaty_dict, indent=4))
 		return 'ok'
 	else:
 		abort(403)

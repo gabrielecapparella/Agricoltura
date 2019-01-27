@@ -11,6 +11,7 @@ import devices as devs
 from queue import Queue
 import threading
 import sensors_utils
+import traceback
 
 
 class Sensors:
@@ -48,7 +49,7 @@ class Sensors:
 			self.start()
 
 		except Exception as e:
-			self.logger.exception(e)
+			self.logger.exception(traceback.format_exc())
 			self.clean_up()
 
 	def loggerSetup(self):
@@ -63,7 +64,7 @@ class Sensors:
 		if not self.state: return
 		self.logger.info("Cleaning up...")
 
-		self.set_act(self.devices.values(), False)
+		self.set_act(self.devices.keys(), False)
 
 		GPIO.cleanup()
 
@@ -92,11 +93,11 @@ class Sensors:
 					time = (now-active_since)/1000 #seconds
 					if isinstance(dev, devs.Irrigation): l = time/60*dev.flow #this is for manual control, not water_cycle
 					else: l = 0
-					kwh = time*dev.wattage/3600000,
+					kwh = time*dev.wattage/3600000
 					cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-					self.db.insert_device_record(dev.name, active_since, now, kwh, l, cost)
+					self.db.insert_device_record((dev.name, active_since, now, kwh, l, cost))
 		except Exception as e:
-			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, e))
+			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, traceback.format_exc()))
 
 	def get_dev_state(self, who): #who can be an object or a list of objects
 		try:
@@ -106,7 +107,7 @@ class Sensors:
 					act_state[name] = self.devices[name].get_state()
 			else: act_state = self.devices[who].get_state()
 		except Exception as e:
-			self.logger.warning("[Sensors.get_dev_state]: something bad happened, what='{}' state='{}'\n\n{}".format(who, e))
+			self.logger.warning("[Sensors.get_dev_state]: something bad happened, what='{}' state='{}'\n\n{}".format(who, traceback.format_exc()))
 		finally:
 			return act_state
 
@@ -126,7 +127,7 @@ class Sensors:
 			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
 			self.db.insert_device_record((dev.name, dev.active_since, now, kwh, l, cost))
 		except Exception as e:
-			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, e))
+			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
 
 	def check_lights_schedule(self, who=[]):
 		if not who: who = self.enabled_devs['grow_lights']
@@ -148,7 +149,7 @@ class Sensors:
 						self.db.insert_device_record((name, now, now+job[1]*1000, kwh, 0, cost)) #sistemare quel *1000
 					if job[3]: job[1]+=job[3]
 		except Exception as e:
-			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, e))
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, traceback.format_exc()))
 
 	def update_thresholds(self, new_th = None):
 		if new_th: self.thresholds = new_th
@@ -210,7 +211,7 @@ class Sensors:
 				if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
 			self.restart(next_interval)
 		except Exception as e:
-			self.logger.exception(e)
+			self.logger.exception(traceback.format_exc())
 			self.clean_up()
 
 	def sensor_read_wrapper(self, sensor, queue):
@@ -328,7 +329,7 @@ class Sensors:
 				if name in self.enabled_devs[dev_type]:
 					self.enabled_devs[dev_type].remove(name)
 		except Exception as e:
-			self.logger.exception("[Sensors.delete_device]: {}".format(e))
+			self.logger.exception("[Sensors.delete_device]: {}".format(traceback.format_exc()))
 
 	def update_device(self, old_name, new_cfg):
 		self.delete_device(old_name, new_cfg)
@@ -337,33 +338,33 @@ class Sensors:
 	def add_device(self, dev):
 		try:
 			if dev['model'] == 'soil_moist_sensors__generic_analog':
-				self.devices[dev['name']] = devs.SoilMoistureSensor(self.adc, dev['adc_channel'], dev['100_voltage'], dev['0_voltage'], dev['adc_gain'])
+				self.devices[dev['name']] = devs.SoilMoistureSensor(adc=self.adc, **dev)
 
 			elif dev['model'] == 'temp_hum_sensors__DHT22':
-				self.devices[dev['name']] = devs.DHT22(dev['GPIO_pin'], dev['max_reading_attempts'])
+				self.devices[dev['name']] = devs.DHT22(**dev)
 			elif dev['model'] == 'temp_hum_sensor__SHT31':
 				pass
 
 			elif dev['model'] == 'fans__pwm_fan':
-				self.devices[dev['name']] = devs.Fan(dev['GPIO_switch_pin'], dev['GPIO_speed_pin'], dev['wattage'], dev['pwm_frequency'])
+				self.devices[dev['name']] = devs.Fan(**dev)
 
 			elif dev['model'] == 'cameras__ip_camera':
-				self.devices[dev['name']] = devs.IP_Camera(dev['name'], dev['user'], dev['password'], dev['ip'], dev['snapshot_dir'], dev['wattage'], dev['snapshot_interval_h'])
+				self.devices[dev['name']] = devs.IP_Camera(**dev)
 
 			elif dev['model'] == 'irrigation__simple_switch':
-				self.devices[dev['name']] = devs.Irrigation(dev['GPIO_switch_pin'], dev['wattage'], dev['water_flow'], dev['cycle_water_time'], dev['cycle_wait_time'])
+				self.devices[dev['name']] = devs.Irrigation(**dev)
 
 			elif dev['model'] == 'heating__simple_switch':
-				self.devices[dev['name']] = devs.Switch(dev['GPIO_switch_pin'], dev['wattage'])
+				self.devices[dev['name']] = devs.Switch(**dev)
 
 			elif dev['model'] == 'grow_lights__simple_switch':
-				self.devices[dev['name']] =	devs.GrowLight(dev['GPIO_switch_pin'], dev['wattage'])
+				self.devices[dev['name']] =	devs.GrowLight(**dev)
 
 			dev_type = dev['model'].split('__')[0]
 			if dev['enabled']: self.enabled_devs[dev_type].append(dev['name'])
 
 		except Exception as e:
-			self.logger.exception("[Sensors.add_device]: {}".format(e))
+			self.logger.exception("[Sensors.add_device]: {}".format(traceback.format_exc()))
 
 	def parse_devices(self, devs=None):
 		try:
@@ -375,4 +376,4 @@ class Sensors:
 				self.add_device(device)
 
 		except Exception as e:
-			self.logger.exception("[Sensors.parse_devices]: {}".format(e))
+			self.logger.exception("[Sensors.parse_devices]: {}".format(traceback.format_exc()))

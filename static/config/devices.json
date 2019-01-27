@@ -1,57 +1,57 @@
 [
     {
-        "0_voltage": 26700,
+        "dry_voltage": 26700,
         "name": "moist_1",
         "adc_gain": 0.6666666666666666,
         "adc_channel": 0,
         "enabled": true,
         "model": "soil_moist_sensors__generic_analog",
-        "100_voltage": 3400
+        "wet_voltage": 3400
     },
     {
-        "0_voltage": 26700,
+        "dry_voltage": 26700,
         "name": "moist_2",
         "adc_gain": 0.6666666666666666,
-        "adc_channel": 3,
-        "enabled": false,
+        "adc_channel": 1,
+        "enabled": true,
         "model": "soil_moist_sensors__generic_analog",
-        "100_voltage": 3400
+        "wet_voltage": 3400
     },
     {
         "max_reading_attempts": 3,
         "name": "th_1",
-        "GPIO_pin": 16,
+        "read_pin": 16,
         "model": "temp_hum_sensors__DHT22",
         "enabled": false
     },
     {
         "max_reading_attempts": 3,
         "name": "th_2",
-        "GPIO_pin": 20,
+        "read_pin": 20,
         "model": "temp_hum_sensors__DHT22",
         "enabled": false
     },
     {
         "enabled": true,
         "name": "arctic_f8_pwm",
-        "GPIO_speed_pin": 21,
+        "speed_pin": 21,
         "pwm_frequency": 25000,
-        "GPIO_switch_pin": 19,
+        "power_pin": 19,
         "model": "fans__pwm_fan",
         "wattage": 5
     },
     {
-        "GPIO_switch_pin": 26,
+        "power_pin": 26,
         "water_flow": 0.1,
         "name": "drippers_1",
         "wattage": 5,
         "cycle_water_time": 1,
         "enabled": true,
         "model": "irrigation__simple_switch",
-        "cycle_wait_time": 10
+        "cycle_spread_time": 10
     },
     {
-        "GPIO_switch_pin": 13,
+        "power_pin": 13,
         "name": "halogen_light_140W",
         "wattage": 110,
         "model": "heating__simple_switch",

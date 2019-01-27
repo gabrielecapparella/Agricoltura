@@ -26,9 +26,10 @@ def get_full_state():
 def setActuator():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		print(data['target_state'])
 		current_app.sensors.set_act([data['name']], *data['target_state'])
-		return json.dumps(current_app.sensors.get_dev_state(data['name']))
+		new_state = current_app.sensors.get_dev_state(data['name'])
+		if not isinstance(new_state, list): new_state = [new_state]
+		return json.dumps(new_state)
 	else:
 		abort(403)
 
@@ -80,7 +81,7 @@ def set_parameters():
 			floaty_dict[k] = float(v)
 
 		with open('static/config/thresholds.json', 'w') as file:
-			file.write(json.dumps(floaty_dict))
+			file.write(json.dumps(floaty_dict, indent=4))
 		current_app.sensors.update_thresholds(floaty_dict)
 		return 'ok'
 	else:

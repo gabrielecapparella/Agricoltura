@@ -9,15 +9,16 @@ import sensors_utils
 import os
 
 class Switch:
-	def __init__(self, pin, wattage):
-		self.pin = pin #BCM
+	def __init__(self, name, power_pin, wattage, **kwargs):
+		self.name = name
+		self.pin = power_pin #BCM
 		self.state = False
 		self.active_since = None
 		self.wattage = wattage
 
 		GPIO.setmode(GPIO.BCM)
-		GPIO.setup(pin, GPIO.OUT)
-		GPIO.output(pin, True) #off
+		GPIO.setup(self.pin, GPIO.OUT)
+		GPIO.output(self.pin, True) #off
 
 	def get_state(self):
 		return self.state
@@ -40,12 +41,12 @@ class Switch:
 		return self.active_since
 
 class Irrigation(Switch):
-	def __init__(self, pin, wattage, flow, wt=1, st=10):
-		super().__init__(pin, wattage)
+	def __init__(self, name, power_pin, wattage, water_flow, cycle_water_time=1, cycle_spread_time=10, **kwargs):
+		super().__init__(name, power_pin, wattage)
 		self.watering_state = 0 #0:inactive, 1:watering, 2:propagating
-		self.water_time = wt
-		self.spread_time = st
-		self.flow = flow
+		self.water_time = cycle_water_time
+		self.spread_time = cycle_spread_time
+		self.flow = water_flow
 		self.timer = sensors_utils.TimerWrap()
 
 	def get_state(self):
@@ -74,13 +75,13 @@ class Irrigation(Switch):
 			if callback: callback(self)
 
 class Fan(Switch):
-	def __init__(self, power_pin, speed_pin, wattage, frequency=25000):
-		super().__init__(power_pin, wattage)
+	def __init__(self, name, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):
+		super().__init__(name, power_pin, wattage)
 		self.speed = 100
 
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(speed_pin, GPIO.OUT)
-		self.speed_ctrl = GPIO.PWM(speed_pin, frequency)
+		self.speed_ctrl = GPIO.PWM(speed_pin, pwm_frequency)
 
 	def get_state(self):
 		return [self.state, self.speed]
@@ -113,21 +114,22 @@ class Fan(Switch):
 		return 0
 
 class GrowLight(Switch):
-	def __init__(self, switch_pin, wattage, min_light_h):
-		super().__init__(switch_pin, wattage)
+	def __init__(self, name, power_pin, wattage, **kwargs):
+		super().__init__(name, power_pin, wattage)
 		self.timer = sensors_utils.TimerWrap()
 
-	def on_for_x_min(self, min):
+	def on_for_x_min(self, minutes):
 		self.on()
-		self.timer.start(min*60, self.off)
+		self.timer.start(minutes*60, self.off)
 
 class SoilMoistureSensor:
-	def __init__(self, adc, channel, min_v, max_v, gain=2/3):
+	def __init__(self, name, adc, adc_channel, wet_voltage, dry_voltage, adc_gain=2/3, **kwargs):
+		self.name = name
 		self.adc = adc
-		self.channel = channel
-		self.min_v = min_v #100%
-		self.max_v = max_v #0%
-		self.gain = gain
+		self.channel = adc_channel
+		self.wet_voltage = wet_voltage #100%
+		self.dry_voltage = dry_voltage #0%
+		self.gain = adc_gain
 		self.last_reading = None
 
 	def get_state(self):
@@ -138,7 +140,7 @@ class SoilMoistureSensor:
 
 	def read(self): #throws
 		raw_value = self.adc.read_adc(self.channel, self.gain)
-		perc = (raw_value-self.min_v)*100/(self.max_v-self.min_v)
+		perc = (raw_value-self.wet_voltage)*100/(self.dry_voltage-self.wet_voltage)
 		perc = round(abs(100-perc), 1)
 		if perc<0: perc = 0
 		elif perc>100: perc = 100
@@ -146,9 +148,10 @@ class SoilMoistureSensor:
 		return perc
 
 class DHT22:
-	def __init__(self, pin, attempts=3):
-		self.pin = pin
-		self.attempts = attempts
+	def __init__(self, name, read_pin, max_reading_attempts=3, **kwargs):
+		self.name = name
+		self.pin = read_pin
+		self.attempts = max_reading_attempts
 		self.last_reading = None
 
 	def get_state(self):
@@ -169,7 +172,7 @@ class DHT22:
 		return reading
 
 class IP_Camera:
-	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1):
+	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
 		self.name = name
 		self.usr = usr
 		self.pwd = pwd

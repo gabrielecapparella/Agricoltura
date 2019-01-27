@@ -49,6 +49,7 @@ $(document).ready(function(){
 				target_state: target
 			}),
 			success: function(response) {
+				response = JSON.parse(response)
 				if(!response[0]) {
 					toggle.attr("class", "toggle-button");
 				} else if(response.length==2 && response[1]>50) {

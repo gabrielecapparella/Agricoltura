@@ -275,18 +275,18 @@ def setup(usr, pwd, db):
 		connection = mysql.connector.connect(user=usr, password=pwd)
 		cursor = connection.cursor()
 
-		#cursor.execute("DROP DATABASE IF EXISTS {}".format(db))
-		#cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db))
+		cursor.execute("DROP DATABASE IF EXISTS {}".format(db))
+		cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db))
 		connection.database = db
 
-		#cursor.execute(table_sensors)
+		cursor.execute(table_sensors)
 		cursor.execute(table_costs)
-		#cursor.execute(table_users)
-		#cursor.execute(table_logins)
+		cursor.execute(table_users)
+		cursor.execute(table_logins)
 
-		#admin_pwd_hash = hashlib.sha256(admin_pwd.encode('utf-8')).hexdigest()
-		#admin_api_key = hashlib.sha1(os.urandom(64)).hexdigest()
-		#cursor.execute("INSERT INTO users (username, pwd_hash, api_key, is_admin) VALUES (%s, %s, %s, %s)", ('admin', admin_pwd_hash, admin_api_key, True))
+		admin_pwd_hash = hashlib.sha256(admin_pwd.encode('utf-8')).hexdigest()
+		admin_api_key = hashlib.sha1(os.urandom(64)).hexdigest()
+		cursor.execute("INSERT INTO users (username, pwd_hash, api_key, is_admin) VALUES (%s, %s, %s, %s)", ('admin', admin_pwd_hash, admin_api_key, True))
 
 		connection.commit()
 		cursor.close()

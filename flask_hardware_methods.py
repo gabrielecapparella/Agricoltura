@@ -45,17 +45,18 @@ def get_devices_cfg():
 def edit_device_cfg():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		current_app.sensors.update_device(data['name'], data['cfg'])
-
-		with open('static/config/devices.json', 'r+') as devs_file:
-			devs = json.loads(devs_file.read())
-			devs[data['index']] = data['cfg']
-			devs_file.seek(0)
-			devs_file.write(json.dumps(devs, indent=4))
-			devs_file.truncate()
-
-		return 0 #0,1,2
-
+		if current_app.sensors.update_device(data['name'], data['cfg']):
+			with open('static/config/devices.json', 'r+') as devs_file:
+				new_cfg = devs_file.read()
+				devs = json.loads(new_cfg)
+				devs[data['index']] = data['cfg']
+				devs_file.seek(0)
+				devs_file.write(json.dumps(devs, indent=4))
+				devs_file.truncate()
+			print(type(devs), devs)
+			return json.dumps({"result":True, "new_cfg":devs})
+		else:
+			return json.dumps({"result":False})
 	else:
 		abort(403)
 

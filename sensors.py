@@ -64,6 +64,7 @@ class Sensors:
 		if not self.state: return
 		self.logger.info("Cleaning up...")
 
+		# add cameras cost
 		self.set_act(self.devices.keys(), False)
 
 		GPIO.cleanup()
@@ -333,7 +334,7 @@ class Sensors:
 
 	def update_device(self, old_name, new_cfg):
 		self.delete_device(old_name, new_cfg)
-		self.add_device(new_cfg)
+		return self.add_device(new_cfg)
 
 	def add_device(self, dev):
 		try:
@@ -362,9 +363,10 @@ class Sensors:
 
 			dev_type = dev['model'].split('__')[0]
 			if dev['enabled']: self.enabled_devs[dev_type].append(dev['name'])
-
+			return True
 		except Exception as e:
 			self.logger.exception("[Sensors.add_device]: {}".format(traceback.format_exc()))
+			return False
 
 	def parse_devices(self, devs=None):
 		try:
@@ -374,6 +376,5 @@ class Sensors:
 
 			for device in devs:
 				self.add_device(device)
-
 		except Exception as e:
 			self.logger.exception("[Sensors.parse_devices]: {}".format(traceback.format_exc()))

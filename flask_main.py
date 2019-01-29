@@ -19,7 +19,7 @@ master.register_blueprint(flask_software_methods.software_methods, url_prefix='/
 master.register_blueprint(flask_hardware_methods.hardware_methods, url_prefix='/agricoltura/methods')
 
 def setup():
-	global master
+	global master, sigint_handler, sigterm_handler
 
 	master.config['TEMPLATES_AUTO_RELOAD'] = True
 	with open('static/config/main_app.json', 'r') as cfg_file:
@@ -28,7 +28,6 @@ def setup():
 	loggingSetup()
 	master.logger.debug('[flask_main]: setup')
 	master.boot_time = sensors_utils.unix_now()
-	print("boot time: {}".format(master.boot_time))
 	master.sensors = sensors.Sensors()
 	master.db = db_utils.DB_Connection()
 	master.clean_up = clean_up
@@ -40,17 +39,20 @@ def setup():
 	signal.signal(signal.SIGTERM, teardown_handler)
 	signal.signal(signal.SIGINT, teardown_handler)
 
-def teardown_handler(signal, frame): clean_up()
+def teardown_handler(signal, frame):
+	clean_up()
+	raise SystemExit#KeyboardInterrupt
 
 def clean_up():
-	global master
+	signal.signal(signal.SIGINT, signal.SIG_DFL)
+	signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+	global master
 	master.logger.debug('[flask_main]: cleanup')
 	now = sensors_utils.unix_now()
 	uptime = (now-master.boot_time)/(3600*1000) # hours
 	kwh = master.sensors.rates['server_w']*uptime/1000
 	master.db.insert_device_record(('server', master.boot_time, now, kwh, 0, kwh*master.sensors.rates['elec_price']))
-	# add cameras cost
 
 	master.db.clean_up()
 	if master.cfg['homebridge']: master.homebridge.send_signal(signal.SIGINT)
@@ -64,11 +66,11 @@ def loggingSetup():
 
 	log_format = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 
-	master.log_handler = RotatingFileHandler('static/log/gunicorn_error.log', maxBytes=1024*1024, backupCount=10)
+	master.log_handler = RotatingFileHandler('static/log/main.log', maxBytes=1024*1024, backupCount=10)
 	master.log_handler.setFormatter(log_format)
 	master.log_handler.setLevel(logging.DEBUG)
 
-	master.logger = logging.getLogger('gunicorn.error')
+	master.logger = logging.getLogger('main.error')
 	master.logger.setLevel(logging.DEBUG)
 
 	master.logger.addHandler(master.log_handler)
@@ -82,11 +84,9 @@ def pageNotFound(e):
 def forbidden(e):
 	return render_template('403.html', title = "Forbidden")
 
-
-#if __name__ == '__main__':
 try:
 	setup()
-	master.run(host='0.0.0.0') #REMOVE IF USING GUNICORN
+	if __name__ == '__main__': master.run(host='0.0.0.0')
 except Exception as e:
 	master.logger.exception(e)
 	clean_up()

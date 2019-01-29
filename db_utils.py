@@ -11,8 +11,12 @@ import json
 from logging.handlers import RotatingFileHandler
 
 class DB_Connection:
-	def __init__(self, db='greenhouse', debug=False):
-		self.loggerSetup('static/log/db_utils.log', debug)
+	def __init__(self, db='greenhouse', testing=False):
+		self.logger = logging.getLogger(__name__)
+		self.log_handler = None
+		if not len(self.logger.handlers):
+			self.loggerSetup('static/log/db_utils.log', testing)
+
 		self.logger.info("[DB_utils]: Initiating...")
 
 		with open('static/config/database.json', 'r') as cfg_file:
@@ -42,13 +46,13 @@ class DB_Connection:
 	def clean_up(self):
 		self.logger.info("[DB_utils]: cleaning up...")
 		self.pool._remove_connections()
-		self.log_handler.close()
-		self.logger.removeHandler(self.log_handler)
+		if self.log_handler:
+			self.log_handler.close()
+			self.logger.removeHandler(self.log_handler)
 
-	def loggerSetup(self, log_file, debug):
-		if debug: log_file = 'db_utils_test.log'
+	def loggerSetup(self, log_file, testing):
+		if testing: log_file = 'db_utils_test.log'
 
-		self.logger = logging.getLogger(__name__)
 		self.log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=10)
 		formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 		self.log_handler.setFormatter(formatter)
@@ -56,10 +60,11 @@ class DB_Connection:
 		self.logger.setLevel(logging.DEBUG)
 
 	def insert(self, model, data):
-		conn = self.pool.get_connection()
-		cursor = conn.cursor()
-		result = True
 		try:
+			conn = self.pool.get_connection()
+			cursor = conn.cursor()
+			result = True
+
 			cursor.execute(model, data)
 		except Exception as e:
 			self.logger.exception('DB.Insert: There was a problem while executing "{}"\n\n{}'.format(model, e))
@@ -70,10 +75,10 @@ class DB_Connection:
 			return result
 
 	def select(self, model, data=""): #returns a list of tuples
-		conn = self.pool.get_connection()
-		cursor = conn.cursor()
-		rows = []
 		try:
+			conn = self.pool.get_connection()
+			cursor = conn.cursor()
+			rows = []
 			cursor.execute(model, data)
 			rows = cursor.fetchall()
 		except Exception as e:

@@ -6,23 +6,7 @@ $(document).ready(function(){
 
 	$.getJSON('/agricoltura/methods/getDevicesCfg', function(data){
 		raw_config = data;
-		var content = '';
-
-		$.each(raw_config, function( index, dev_raw_cfg){
-			content += '<tr>';
-			content += '<td class="dev-name">'+dev_raw_cfg["name"]+'</td>'; 
-			content += '<td>'+dev_raw_cfg["model"]+'</td>';
-			content += '<td>'+dev_raw_cfg["enabled"]+'</td>';
-			content += '</tr>';			
-		});		
-		
-		$('#dev-table tbody').html(content);
-
-		$('#dev-table>tbody>tr').click(function(){
-			click_dev_table($(this));
-		});	
-
-		click_dev_table($('#dev-table>tbody>tr:first'));
+		fill_dev_table();
 	});
 
 	$('.zero, .one, .two').click(function(){
@@ -62,37 +46,40 @@ $(document).ready(function(){
 	});
 
 	$('#edit-dev-cfg').click(function(){
-		usr_cfg = JSON.parse($('#dev-raw-config>textarea').val());
+		try {
+			usr_cfg = JSON.parse($('#dev-raw-config>textarea').val());
+		} catch(e) {
+			$('#edit-cfg-result').attr("class", "red");
+			$("#edit-cfg-result").text("SYNTAX ERROR");	
+			return false;
+		}
+
 		$.ajax({ url: '/agricoltura/methods/editDevCfg', 
 			type: 'POST',
-			contentType: 'application/json', 
+			contentType: 'application/json',
+			dataType: 'json',
 			data: JSON.stringify({ 
 				name: sel_dev_name,
 				index: sel_dev_index,
 				cfg: usr_cfg
 			}),
 			success: function(response) {
-				switch(response['result']) {
-					case 0:
-						$('#edit-cfg-result').attr("class", "green");
-						$("#edit-cfg-result").text("OK");
-						break;
-					case 1:
-						$('#edit-cfg-result').attr("class", "red");
-						$("#edit-cfg-result").text("SYNTAX ERROR");
-					case 2:
-						$('#edit-cfg-result').attr("class", "red");
-						$("#edit-cfg-result").text("VALUE ERROR");									
+				if(response["result"]) {
+					$('#edit-cfg-result').attr("class", "green");
+					$("#edit-cfg-result").text("OK");
+					raw_config = response["new_cfg"];
+					fill_dev_table();
+				} else {
+					$('#edit-cfg-result').attr("class", "red");
+					$("#edit-cfg-result").text("VALUE ERROR");									
 				}
-				$("#edit-cfg-result").show();
 			},
 			error: function(response) {
 				$('#users-result').attr("class", "red");
 				$("#edit-cfg-result").text("ERROR");
-				$("#edit-cfg-result").show();
 			}
 		});
-
+		$("#edit-cfg-result").show();
 	});
 
 	function click_dev_table(row) {
@@ -102,7 +89,23 @@ $(document).ready(function(){
 		sel_dev_index = $('tr').index(row)-1;
 		sel_dev_name = $(row).children('.dev-name').html();
 		dev_cfg = JSON.stringify(raw_config[sel_dev_index], null, '  ');
-		$('#dev-raw-config>textarea').text(dev_cfg);		
-	}	
+		$('#dev-raw-config>textarea').val(dev_cfg);		
+	}
+
+	function fill_dev_table() {
+		var content = '';
+		$.each(raw_config, function( index, dev_raw_cfg){
+			content += '<tr>';
+			content += '<td class="dev-name">'+dev_raw_cfg["name"]+'</td>'; 
+			content += '<td>'+dev_raw_cfg["model"]+'</td>';
+			content += '<td>'+dev_raw_cfg["enabled"]+'</td>';
+			content += '</tr>';			
+		});		
+		$('#dev-table tbody').html(content);
+		$('#dev-table>tbody>tr').click(function(){
+			click_dev_table($(this));
+		});	
+		click_dev_table($('#dev-table>tbody>tr:first'));		
+	}
 
 });

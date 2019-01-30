@@ -1,44 +1,18 @@
 {% extends "layout.html" %}
-{% block body %}
-	<body data-spy="scroll" data-target="#navbar" data-offset="30">
-		<img src="{{ url_for('static', filename='main_img.jpg') }}" class="img-fluid">
-		
-		<nav id="navbar" class="navbar navbar-expand-sm navbar-dark sticky-top">
-			<a class="navbar-brand" href="#">Agricoltura</a>
-			<ul class="nav navbar-nav ml-auto"">
-				<li class="nav-item">
-					<a class="nav-link" href="#what">What</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="#why">Why</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="#who">Who</a>
-				</li>
-			</ul>
-				{% if session.logged_in %}				
-					<a href="{{ url_for('web_interface.logout') }}" class="btn btn-outline-light btn-sm ml-2" role="button">Logout</a>
-				{% else %}	
-					<a href="{{ url_for('web_interface.login') }}" class="btn btn-outline-light btn-sm ml-2" role="button">Login</a>
-				{% endif %}
-		</nav>
-		
-		<section class="container-fluid text-center p-5" id="what">
-		
-			<div class="row justify-content-center my-3">
-				<p class="text-center"><h2>What</h2></p>
+{% block main %}
+		<img id="main-img" src="{{ url_for('static', filename='main_img.jpg') }}">
+		{% include 'navbar.html' %}
+		<section id="what">
+			<h1 class="sec-title">What</h1>
+			<div class="text">
+				<p>
+					Agricoltura is a framework designed to operate automated greenhouses.
+					Ours are provided with a range of sensors and actuators to check, log and control their own protected environment.
+					The user can either directly control them or completely rely on the system.
+					Both safety and security are guaranteed within Agricoltura.
+				</p>
 			</div>
-			<div class="row justify-content-center">
-				<div class="col-6">
-					<p class="text-justify">
-						Agricoltura is a framework designed to operate automated greenhouses.
-						Ours are provided with a range of sensors and actuators to check, log and control their own protected environment.
-						The user can either directly control them or completely rely on the system.
-						Both safety and security are guaranteed within Agricoltura.
-					</p>
-				</div>
-			</div>
-			<div class="row justify-content-center">
+			<!-- <div class="row justify-content-center">
 				<div class="col-auto border rounded border-dark m-4 my-card">
 					<div class="row border-dark border-bottom p-2 my-card-title">
 						<div class="col">Monitor</div>				
@@ -80,42 +54,32 @@
 						</div>
 					</div>							
 				</div>													
+			</div>-->
+		</section>
+		
+		<section id="why" class="colored-section">
+			<h1 class="sec-title">Why</h1>
+			<div class="text">
+				<p>
+					Agricoltura was born as a bachelors degree's final project, specifically in Computer Science and Engineering.
+					It's set in a context of rapid technologic innovation in the agriculture sector, 
+					which the commissioning company thought it was worth investing in.						
+				</p>
+				<p>
+					The idea was experimenting on the model of precision agriculture. 
+					A technique that relies on constant readings about environmental parameters to decide where, how and when to operate.
+				</p>
 			</div>
 		</section>
 		
-		<section id="why" class="container-fluid text-center p-5 colored-section">
-			<div class="row justify-content-center my-3">
-				<p class="text-center"><h2>Why</h2></p>
-			</div>
-			<div class="row justify-content-center">
-				<div class="col-6">
-					<p class="text-justify">
-						Agricoltura was born as a bachelors degree's final project, specifically in Computer Science and Engineering.
-						It's set in a context of rapid technologic innovation in the agriculture sector, 
-						which the commissioning company thought it was worth investing in.						
-					</p>
-					<p class="text-justify">
-						The idea was experimenting on the model of precision agriculture. 
-						A technique that relies on constant readings about environmental parameters to decide where, how and when to operate.		
-					</p>
-				</div>
+		<section id="who">
+			<h1 class="sec-title">Who</h1>
+			<div class="text">
+				<p>
+					Agricoltura has been commissioned in 2018 by <a href="http://www.araneum.it"><em>Araneum Group</em></a>, 
+					an IT company based in Rome that specializes in consulting.
+					It was then designed and developed, with the help of the company's team, by Gabriele Capparella. 
+				</p>
 			</div>
 		</section>
-		
-		<section class="container-fluid text-center p-5 mb-4" id="who">
-			<div class="row justify-content-center my-3">
-				<p class="text-center"><h2>Who</h2></p>
-			</div>
-			<div class="row justify-content-center">
-				<div class="col-6">
-					<p class="text-justify">
-						Agricoltura has been commissioned in 2018 by <a href="http://www.araneum.it"><em>Araneum Group</em></a>, 
-						an IT company based in Rome that specializes in consulting.
-						It was then designed and developed, with the help of the company's team, by Gabriele Capparella. 
-						Gabriele is a graduating engineering student from University Roma Tre, Rome.  
-					</p>
-				</div>
-			</div>
-		</section>
-	</body>
 {% endblock %}

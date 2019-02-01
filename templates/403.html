@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
-{% block body %}
-	<body>
-		<section class="container-fluid text-center p-5 colored-section my-5">
+{% block main %}
+		<section id="forbidden" class="colored-section">
 			<h1>Forbidden</h1>
 			<p>You are not authorized.</p>
 				{% if not session.logged_in %}		
@@ -9,6 +8,4 @@
 					<p>or</p>
 				{% endif %}
 			<p><a href="{{ url_for('web_interface.index') }}">Go back to index</a></p>
-		</section>
-	</body>
 {% endblock %}

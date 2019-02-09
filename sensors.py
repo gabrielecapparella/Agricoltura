@@ -212,7 +212,6 @@ class Sensors:
 			self.clean_up()
 
 	def read_sensors_callback(self, results):
-		print("callback", results)
 		self.logger.debug("[Sensors.read_sensors_callback]: results={}".format(results))
 		if (results["moist"]["max"]-results["moist"]["min"])>self.dev_deltas["moist_max_delta"]:
 			self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(results["moist"]["min"], results["moist"]["max"]))

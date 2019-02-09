@@ -25,8 +25,8 @@ body {
 }
 
 #navbar a{
-     color: white;
-     text-decoration:none;
+    color: white;
+    text-decoration:none;
 }
 
 #navbar > a:hover {
@@ -62,7 +62,7 @@ body {
 	padding: 3px;
 	background-color: #0C3C60;
 	color: white;
-	width: 60px;
+	min-width: 60px;
 	cursor: pointer;
 }
 
@@ -94,6 +94,40 @@ section {
 	width: 50%;
 	text-align: justify;
 	margin: 0 auto;
+}
+
+#form-thresholds {
+	border:1px solid black;
+	max-width: 550px;
+	display: flex;
+	flex-wrap: wrap;
+	margin: 10px auto;
+	justify-content: center;
+}
+
+.input-group {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	margin: 10px;
+}
+
+.input-group > input {
+	width: 60px;
+	text-align: center;
+}
+
+.input-group > label {
+	width: 170px;
+}
+
+#form-thresholds > hr {
+  width: 100%;
+  margin: 0;
+}
+
+#form-thresholds > .blue-button {
+	margin: 10px;
 }
 
 .cards {
@@ -194,8 +228,6 @@ section {
 .toggle-button-two .zero, .one { background-color: transparent; }
 
 #dev-table-container {
-/*	border:1px solid black;
-	border-radius: 2px;*/
 	width: 550px;
 	margin: 10px;
 }
@@ -252,10 +284,19 @@ section {
 }
 
 #history-chart {
+	border:1px solid black;
 	width: 620px;
+	margin: 10px auto;
 	display: flex;
-	flex-direction: column;
+/*	flex-direction: column;*/
 	justify-content: center;
+	flex-wrap: wrap;
+}
+
+#history-chart > .blue-button {
+	margin: 10px;
+	padding: 3px 5px;
+	width: 120px;
 }
 
 .chart {

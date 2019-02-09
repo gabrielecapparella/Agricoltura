@@ -33,7 +33,7 @@ def devices():
 @web_interface.route('/control')
 def control():
 	if isAuthorized():
-		return render_template('control.html', title="Control", user=session['user'])
+		return render_template('control.html', title="Control")#, user=session['user']) REMOVE BEFORE FLIGHT
 	else: abort(403)
 
 @web_interface.route('/manage')

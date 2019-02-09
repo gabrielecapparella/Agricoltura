@@ -47,6 +47,13 @@ class TimerWrap:
 		if self.active_since: return self.current_timer.interval - self.elapsed()
 		else: return 0
 
+def read_multiple_sensors(s):#devices, names):
+	results = {}
+	for s_name in s:
+		results['ape'] = s_name.read()
+	print(str(results))
+	return results
+
 def get_now():
 	from_zone = tz.gettz('UTC')
 	to_zone = tz.gettz('Europe/Rome')

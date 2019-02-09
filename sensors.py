@@ -8,11 +8,9 @@ from logging.handlers import RotatingFileHandler
 import json
 import datetime
 import devices as devs
-from queue import Queue
-import threading
+from threading import Thread
 import sensors_utils
 import traceback
-
 
 class Sensors:
 	def __init__(self):
@@ -24,6 +22,7 @@ class Sensors:
 			self.active_control = [False]*4				#fan,heating,light,irrigation. What is to be controlled
 			self.last_reading = None
 			self.cycle_timer = sensors_utils.TimerWrap()
+			self.reading_thread = None
 			self.adc = Adafruit_ADS1x15.ADS1115()
 
 			self.devices = {}
@@ -204,79 +203,75 @@ class Sensors:
 	def cycle(self):
 		try:
 			self.logger.debug('Cycle')
-
-			next_interval = None
 			if self.state[0]:
-				readings = self.read_sensors()
-				self.operate(readings)
-				if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
-			self.restart(next_interval)
+				self.reading_thread = Thread(target=self.read_sensors)
+				self.reading_thread.start()
+			else: self.restart()
 		except Exception as e:
 			self.logger.exception(traceback.format_exc())
 			self.clean_up()
 
-	def sensor_read_wrapper(self, sensor, queue):
-		queue.put(sensor.read())
+	def read_sensors_callback(self, results):
+		print("callback", results)
+		self.logger.debug("[Sensors.read_sensors_callback]: results={}".format(results))
+		if (results["moist"]["max"]-results["moist"]["min"])>self.dev_deltas["moist_max_delta"]:
+			self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(results["moist"]["min"], results["moist"]["max"]))
+		if (results["temp"]["max"]-results["temp"]["min"])>self.dev_deltas["max_temp_delta"]:
+			self.logger.warning("[Sensors.read_sensors]: Temp readings differ too much (min:{}, max:{})".format(results["temp"]["min"], results["temp"]["max"]))
+		if (results["hum"]["max"]-results["hum"]["min"])>self.dev_deltas["max_hum_delta"]:
+			self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(results["hum"]["min"], results["hum"]["max"]))
 
-	def read_sensors(self):
-		self.logger.debug("Reading sensors...")
-		threads, q_moist, q_th = [], Queue(), Queue()
+		readings = [sensors_utils.unix_now()]
+		readings.append(results["temp"]["avg"])
+		readings.append(results["hum"]["avg"])
+		readings.append(results["moist"]["avg"])
 
-		for s_name in self.enabled_devs['soil_moist_sensors']:
-			t = threading.Thread(target=self.sensor_read_wrapper, args=(self.devices[s_name], q_moist))
-			threads.append(t)
-			t.start()
-
-		for s_name in self.enabled_devs['temp_hum_sensors']:
-			t = threading.Thread(target=self.sensor_read_wrapper, args=(self.devices[s_name], q_th))
-			threads.append(t)
-			t.start()
-
-		for t in threads: t.join()
-
-		m_min, m_max, m_avg, m_good = 101, -1, 0, 0
-		while not q_moist.empty():
-			reading = q_moist.get()
-			if reading is not None:
-				if reading<m_min: m_min = reading
-				if reading>m_max: m_max = reading
-				m_avg += reading
-				m_good += 1
-		if m_good: m_avg = round(m_avg/m_good, 1)
-		else: m_avg = None
-		self.logger.debug("[Sensors.read_sensors]: m_min={}, m_max={}, m_avg={}, m_good={}".format(m_min, m_max, m_avg, m_good))
-		if (m_max-m_min)>self.dev_deltas["moist_max_delta"]:
-				self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(m_min, m_max))
-
-		th_min, th_max, th_avg, th_good = [100, 101], [-274, -1], [0, 0], [0, 0]
-		while not q_th.empty():
-			reading = q_th.get()
-			if reading[0] is not None:
-				if reading[0]<th_min[0]: th_min[0] = reading[0]
-				if reading[0]>th_max[0]: th_max[0] = reading[0]
-				th_avg[0]+=reading[0]
-				th_good[0]+=1
-			if reading[1] is not None:
-				if reading[1]<th_min[1]: th_min[1] = reading[1]
-				if reading[1]>th_max[1]: th_max[1] = reading[1]
-				th_avg[1]+=reading[1]
-				th_good[1]+=1
-		if th_good[0]: th_avg[0] = round(th_avg[0]/th_good[0], 1)
-		else: th_avg[0] = None
-		if th_good[1]: th_avg[1] = round(th_avg[1]/th_good[1], 1)
-		else: th_avg[1] = None
-
-		self.logger.debug("[Sensors.read_sensors]: th_min={}, th_max={}, th_avg={}, th_good={}".format(th_min, th_max, th_avg, th_good))
-		if (th_max[0]-th_min[0])>self.dev_deltas["max_temp_delta"]:
-				self.logger.warning("[Sensors.read_sensors]: Temp readings differ too much (min:{}, max:{})".format(th_min[0], th_max[0]))
-		if (th_max[1]-th_min[1])>self.dev_deltas["max_hum_delta"]:
-				self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(th_min[1], th_max[1]))
-
-		readings = [sensors_utils.unix_now()] + th_avg + [m_avg]
 		self.db.insert_sensors_reading(readings)
 		self.last_reading = readings
 
-		return readings
+		self.operate(readings)
+		next_interval = None
+		if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
+		self.restart(next_interval)
+
+	def read_sensors(self):
+		self.logger.debug("Reading sensors...")
+
+		results = {
+			"moist": {"min": 101,"max": -1,"avg": 0,"good": 0},
+			"temp": {"min": 100,"max": -274,"avg": 0,"good": 0},
+			"hum": {"min": 101,"max": -1,"avg": 0,"good": 0}
+		}
+
+		for s_name in self.enabled_devs['soil_moist_sensors']:
+			reading = self.devices[s_name].read()
+			if reading is not None:
+				if reading<results["moist"]["min"]: results["moist"]["min"] = reading
+				if reading>results["moist"]["max"]: results["moist"]["max"] = reading
+				results["moist"]["avg"] += reading
+				results["moist"]["good"] += 1
+		if results["moist"]["good"]:
+			results["moist"]["avg"] = round(results["moist"]["avg"]/results["moist"]["good"], 1)
+		else: results["moist"]["avg"] = None
+
+		for s_name in self.enabled_devs['temp_hum_sensors']:
+			reading = self.devices[s_name].read()
+			if reading[0] is not None:
+				if reading[0]<results["temp"]["min"]: results["temp"]["min"] = reading[0]
+				if reading[0]>results["temp"]["max"]: results["temp"]["max"] = reading[0]
+				results["temp"]["avg"]+=reading[0]
+				results["temp"]["good"]+=1
+			if reading[1] is not None:
+				if reading[1]<results["hum"]["min"]: results["hum"]["min"] = reading[1]
+				if reading[1]>results["hum"]["max"]: results["hum"]["max"] = reading[1]
+				results["hum"]["avg"]+=reading[1]
+				results["hum"]["good"]+=1
+		if results["temp"]["good"]: results["temp"]["avg"] = round(results["temp"]["avg"]/results["temp"]["good"], 1)
+		else: results["temp"]["avg"] = None
+		if results["hum"]["good"]: results["hum"]["avg"] = round(results["hum"]["avg"]/results["hum"]["good"], 1)
+		else: results["hum"]["avg"] = None
+
+		self.read_sensors_callback(results)
 
 	def operate(self, readings): #[dt, temp, hum, moist]
 		#fans

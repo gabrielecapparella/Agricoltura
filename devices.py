@@ -139,7 +139,7 @@ class SoilMoistureSensor:
 		return False
 
 	def read(self): #throws
-		raw_value = self.adc.read_adc(self.channel, self.gain)
+		raw_value = self.adc.read_adc(self.channel, gain=self.gain)
 		perc = (raw_value-self.wet_voltage)*100/(self.dry_voltage-self.wet_voltage)
 		perc = round(abs(100-perc), 1)
 		if perc<0: perc = 0

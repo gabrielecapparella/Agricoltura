@@ -2,7 +2,7 @@
     {
         "wet_voltage": 3400,
         "name": "moist_1",
-        "adc_gain": 0.6666666666666666,
+        "adc_gain": 1,
         "enabled": true,
         "model": "soil_moist_sensors__generic_analog",
         "adc_channel": 0,
@@ -11,12 +11,21 @@
     {
         "wet_voltage": 3400,
         "name": "moist_2",
-        "adc_gain": 0.6666666666666666,
+        "adc_gain": 1,
         "enabled": true,
         "model": "soil_moist_sensors__generic_analog",
         "adc_channel": 1,
         "dry_voltage": 26700
     },
+    {
+        "wet_voltage": 3400,
+        "name": "moist_3",
+        "adc_gain": 1,
+        "enabled": false,
+        "model": "soil_moist_sensors__generic_analog",
+        "adc_channel": 2,
+        "dry_voltage": 26700
+    },    
     {
         "max_reading_attempts": 3,
         "enabled": false,

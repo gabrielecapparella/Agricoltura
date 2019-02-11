@@ -16,35 +16,24 @@
         "model": "soil_moist_sensors__generic_analog",
         "adc_channel": 1,
         "dry_voltage": 26700
-    },
-    {
-        "wet_voltage": 3400,
-        "name": "moist_3",
-        "adc_gain": 1,
-        "enabled": false,
-        "model": "soil_moist_sensors__generic_analog",
-        "adc_channel": 2,
-        "dry_voltage": 26700
     },    
     {
-        "max_reading_attempts": 3,
-        "enabled": false,
-        "model": "temp_hum_sensors__DHT22",
-        "name": "th_1",
-        "read_pin": 17
+        "enabled": true,
+        "model": "temp_hum_sensors__SHT31",
+        "name": "sht31_1",
+        "address": "0x44"
     },
     {
-        "max_reading_attempts": 3,
-        "enabled": false,
-        "model": "temp_hum_sensors__DHT22",
-        "name": "th_2",
-        "read_pin": 20
+        "enabled": true,
+        "model": "temp_hum_sensors__SHT31",
+        "name": "sht31_2",
+        "address": "0x45"
     },
     {
         "name": "arctic_f8_pwm",
-        "power_pin": 19,
+        "power_pin": 20,
         "wattage": 5,
-        "speed_pin": 21,
+        "speed_pin": 16,
         "enabled": true,
         "model": "fans__pwm_fan",
         "pwm_frequency": 25000
@@ -62,7 +51,7 @@
     {
         "enabled": true,
         "model": "heating__simple_switch",
-        "power_pin": 13,
+        "power_pin": 21,
         "wattage": 110,
         "name": "halogen_light_140W"
     }

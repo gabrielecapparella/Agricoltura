@@ -11,6 +11,8 @@ import devices as devs
 from threading import Thread
 import sensors_utils
 import traceback
+import smbus
+
 
 class Sensors:
 	def __init__(self):
@@ -24,6 +26,7 @@ class Sensors:
 			self.cycle_timer = sensors_utils.TimerWrap()
 			self.reading_thread = None
 			self.adc = Adafruit_ADS1x15.ADS1115()
+			self.bus = smbus.SMBus(1) # I2C
 
 			self.devices = {}
 			self.enabled_devs = {
@@ -337,8 +340,10 @@ class Sensors:
 
 			elif dev['model'] == 'temp_hum_sensors__DHT22':
 				self.devices[dev['name']] = devs.DHT22(**dev)
-			elif dev['model'] == 'temp_hum_sensor__SHT31':
-				pass
+
+			elif dev['model'] == 'temp_hum_sensors__SHT31':
+				print("found sht31")
+				self.devices[dev['name']] = devs.SHT31(bus=self.bus, **dev)
 
 			elif dev['model'] == 'fans__pwm_fan':
 				self.devices[dev['name']] = devs.Fan(**dev)

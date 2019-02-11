@@ -145,7 +145,31 @@ class SoilMoistureSensor:
 		if perc<0: perc = 0
 		elif perc>100: perc = 100
 		self.last_reading = perc
-		return perc
+		return self.last_reading
+
+class SHT31:
+	def __init__(self, name, bus, address, **kwargs):
+		self.name = name
+		self.bus = bus
+		if isinstance(address, str): address = int(address, 16)
+		self.address = address
+		self.last_reading = None
+
+	def get_state(self):
+		return self.last_reading
+
+	def set_state(self, state):
+		return False
+
+	def read(self): #throws
+		self.bus.write_i2c_block_data(self.address, 0x2C, [0x06])
+		time.sleep(0.5)
+		data = self.bus.read_i2c_block_data(self.address, 0x00, 6)
+		temp = data[0] * 256 + data[1]
+		cTemp = -45 + (175 * temp / 65535.0) # celsius
+		humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
+		self.last_reading = [round(cTemp,1), round(humidity,1)]
+		return self.last_reading
 
 class DHT22:
 	def __init__(self, name, read_pin, max_reading_attempts=3, **kwargs):
@@ -169,7 +193,7 @@ class DHT22:
 				break
 			time.sleep(5)
 		self.last_reading = reading
-		return reading
+		return self.last_reading
 
 class IP_Camera:
 	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):

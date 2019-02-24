@@ -28,18 +28,62 @@
 					<label for="max-moist">Max soil moisture (%):</label>
 					<input type="number" id="max-moist" min="0" max="100" value="0">
 				</div>
-				<hr>
-				<div id="update-params" class="blue-button">Update</div>
-				<div id="reset-params" class="blue-button">Reset</div>
+				<div id="form-thresholds-bottom">
+					<div id="update-params" class="blue-button">Update</div>
+					<div id="reset-params" class="blue-button">Reset</div>
+					<p id="set-param-result" class="text-monospace"></p>
+				</div>
 			</div>
-			<p id="set-param-result" class="text-monospace"></p>
 		</section>
-
-<!-- 		<section id="light-schedule">
+		<section id="light-schedule">
 			<h1 class="sec-title">Light Schedule</h1>
-
-		</section> -->
-
+			<div class="cards">
+				<div id="light-table-container">
+					<table id="light-table">
+						<thead>
+							<tr>
+								<th>Who</th>
+								<th>When</th>
+								<th>How Long (h)</th>
+								<th>How Often (h)</th>
+								<th>Enabled</th>
+							</tr>
+						</thead>
+						<tbody>	
+						</tbody>
+					</table>
+				</div>
+				<div id="form-light">
+					<div class="input-group">
+						<label for="light-who">Who:</label>
+						<input type="text" id="light-who">
+					</div>
+					<div class="input-group">
+						<label for="light-when">When:</label>
+						<input type="datetime-local" id="light-when">
+					</div>
+					<div class="input-group">
+						<label for="light-duration">How Long (h):</label>
+						<input type="number" id="light-duration">
+					</div>
+					<div class="input-group">
+						<label for="light-interval">How Often (h):</label>
+						<input type="number" id="light-interval">
+					</div>
+					<div class="input-group">
+						<label for="light-interval">Enabled:</label>
+						<select id="light-interval">
+							<option value="true">True</option>
+							<option value="false">False</option>
+						</select>
+					</div>
+					<div id="form-light-bottom">
+						<div id="edit-light-cfg" class="blue-button">Save</div>
+						<p id="edit-light-result"></p>
+					</div>
+				</div>
+			</div>
+		</section>		
 		<section id="history">
 			<h1 class="sec-title">History</h1>
 			<script type = "text/javascript" src="{{ url_for('static', filename='js/moment.js') }}"></script>
@@ -87,5 +131,5 @@
 				</tbody>
 			</table> -->
 		</section>
-
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/control.css') }}">
 {% endblock %}

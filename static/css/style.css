@@ -72,6 +72,11 @@ h1.sec-title {
 	padding: 0;
 }
 
+hr {
+	width: 100%;
+	margin: 0;
+}
+
 section {
 	display: flex;
 	justify-content: center;
@@ -96,37 +101,10 @@ section {
 	margin: 0 auto;
 }
 
-#form-thresholds {
-	border:1px solid black;
-	max-width: 550px;
-	display: flex;
-	flex-wrap: wrap;
-	margin: 10px auto;
-	justify-content: center;
-}
-
 .input-group {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
-	margin: 10px;
-}
-
-.input-group > input {
-	width: 60px;
-	text-align: center;
-}
-
-.input-group > label {
-	width: 170px;
-}
-
-#form-thresholds > hr {
-  width: 100%;
-  margin: 0;
-}
-
-#form-thresholds > .blue-button {
 	margin: 10px;
 }
 
@@ -227,7 +205,7 @@ section {
 .toggle-button-two .two { background-color: #28a745; }
 .toggle-button-two .zero, .one { background-color: transparent; }
 
-#dev-table-container {
+#dev-table-container, #light-table-container {
 	width: 550px;
 	margin: 10px;
 }
@@ -238,12 +216,12 @@ section {
 	padding: 10px;
 }
 
-#dev-table, th {
+th {
 	border:1px solid gray;
 	padding: 10px;
 }
 
-#dev-table td {
+td {
 	padding: 8px;
 	border:1px solid gray;
 }
@@ -252,7 +230,7 @@ section {
 	text-align:center;
 }
 
-#dev-table tbody tr:hover {
+tbody tr:hover {
 	cursor: pointer;
 	background-color: AliceBlue;
 }
@@ -264,7 +242,7 @@ section {
 #dev-raw-config {
 	border:1px solid black;
 	min-width: 400px;
-	min-height: 250px;
+	min-height: 250px;	
 	margin: 10px;
 	padding: 10px;
 	display: flex;
@@ -272,34 +250,13 @@ section {
 	justify-content: center;
 }
 
-#dev-raw-config>textarea {
+#dev-raw-config > textarea {
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
 	margin-bottom: 10px;
 }
 
-#edit-cfg-result {
+#edit-cfg-result, #edit-light-result {
 	display: none;
-}
-
-#history-chart {
-	border:1px solid black;
-	width: 620px;
-	margin: 10px auto;
-	display: flex;
-/*	flex-direction: column;*/
-	justify-content: center;
-	flex-wrap: wrap;
-}
-
-#history-chart > .blue-button {
-	margin: 10px;
-	padding: 3px 5px;
-	width: 120px;
-}
-
-.chart {
-	width: 600px;
-	height: 300px;
 }

@@ -136,7 +136,7 @@ class Sensors:
 		if not who: who = self.enabled_devs['grow_lights']
 		now = sensors_utils.get_now()
 		try:
-			for job in self.g_lights_schedule:
+			for job in self.g_lights_schedule: #job = [when, how_many_hours, ]
 				if job[0]<=now:
 
 					if job[1]<0 and self.active_control[2]: #additional hours of light
@@ -342,7 +342,6 @@ class Sensors:
 				self.devices[dev['name']] = devs.DHT22(**dev)
 
 			elif dev['model'] == 'temp_hum_sensors__SHT31':
-				print("found sht31")
 				self.devices[dev['name']] = devs.SHT31(bus=self.bus, **dev)
 
 			elif dev['model'] == 'fans__pwm_fan':

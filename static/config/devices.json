@@ -50,9 +50,9 @@
     },
     {
         "enabled": true,
-        "model": "heating__simple_switch",
+        "model": "grow_lights__simple_switch",
         "power_pin": 21,
         "wattage": 110,
-        "name": "halogen_light_140W"
+        "name": "led_light_50W"
     }
 ]

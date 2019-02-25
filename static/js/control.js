@@ -1,30 +1,15 @@
 $(document).ready(function(){
+	var light_schedule;
+	var sel_rule_index;
 
-	// $.getJSON('/agricoltura/methods/getLastReading', function(data){
-	// 	$('#temp-reading').html(data['temp']);
-	// 	$('#hum-reading').html(data['hum']);
-	// 	$('#moist-reading').html(data['moist']);
-	// });
-
-	// $.getJSON('/agricoltura/methods/getActuators', function(data){
-	// 	if(data['sensors_on']) { $('#sensors-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
-	// 	if(data['actuators_on']) { $('#actuators-toggle').attr('class', 'toggle-button toggle-button-on p-0'); }
-	// 	if(data['light_on']) { $('#light-toggle').attr('class', 'toggle-button toggle-button-on'); }
-	// 	if(data['water_on']) { $('#irrigation-toggle').attr('class', 'toggle-button toggle-button-on'); }
-	// 	if(data['fan_on']) {
-	// 		if(data['fan_speed']<=50) {$('#fan-toggle').attr('class', 'toggle-button toggle-button-on');}
-	// 		else {$('#fan-toggle').attr('class', 'toggle-button toggle-button-two');}
-	// 	}
-	// });
+	$.getJSON('/agricoltura/methods/getLightSchedule', function(data){
+		raw_config = data;
+		fill_dev_table();
+	});
 
 	getParameters();
-	// getRates();
-	// getCosts();
 
-	// $('#reset').click(getParameters);
-	// $('#calculate-costs').click(getCosts);
-
-	$('#update-param').click(function(){
+	$('#update-params').click(function(){
 		$.ajax({ url: '/agricoltura/methods/setParameters',
 			type: 'POST',
 			contentType: 'application/json',
@@ -44,11 +29,42 @@ $(document).ready(function(){
 				$('#set-param-result').attr('class', 'text-monospace text-danger');
 				$('#set-param-result').text('ERROR');
 			},
-			complete: : function(response) {
+			complete: function(response) {
 				getParameters();
 			}
 		});
 	});
+
+	$('#reset-params').click(getParameters);
+
+	$('#edit-light-cfg').click(function(){
+		$.ajax({ url: '/agricoltura/methods/editLightCfg', 
+			type: 'POST',
+			contentType: 'application/json',
+			dataType: 'json',
+			data: JSON.stringify({ 
+				name: sel_dev_name,
+				index: sel_dev_index,
+				cfg: usr_cfg
+			}),
+			success: function(response) {
+				if(response["result"]) {
+					$('#edit-cfg-result').attr("class", "green");
+					$("#edit-cfg-result").text("OK");
+					raw_config = response["new_cfg"];
+					fill_dev_table();
+				} else {
+					$('#edit-cfg-result').attr("class", "red");
+					$("#edit-cfg-result").text("VALUE ERROR");									
+				}
+			},
+			error: function(response) {
+				$('#users-result').attr("class", "red");
+				$("#edit-cfg-result").text("ERROR");
+			}
+		});
+		$("#edit-cfg-result").show();
+	});	
 
 	function getParameters() {
 		$.getJSON('/agricoltura/methods/getParameters', function(data){
@@ -61,120 +77,29 @@ $(document).ready(function(){
 		});
 	}
 
-	// $('#update-rates').click(function(){
-	// 	$.ajax({ url: '/agricoltura/methods/setRates',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({
-	// 			elec_price: $("#elec-price").val(),
-	// 			water_price: $("#water-price").val(),
-	// 			fan_w: $("#fan-w").val(),
-	// 			pump_w: $("#pump-w").val(),
-	// 			pump_f: $("#pump-f").val(),
-	// 			light_w: $("#light-w").val(),
-	// 			server_w: $("#server-w").val()
-	// 		}),
-	// 		success: function(response) {
-	// 			$('#set-rates-result').attr('class', 'text-monospace text-success');
-	// 			$('#set-rates-result').text('OK');
-	// 			getRates();
-	// 		},
-	// 		error: function(response) {
-	// 			$('#set-rates-result').attr('class', 'text-monospace text-danger');
-	// 			$('#set-rates-result').text('ERROR');
-	// 			getRates();
-	// 		}
-	// 	});
-	// });
+	function click_light_table(row) {
+		$('#light-table>tbody>tr').removeClass('checked-table-row');
+		$(row).toggleClass('checked-table-row');
+		sel_rule_index = $('tr').index(row)-1;	
+	}
 
-	// $('#sensors-toggle').click(function(){
-	// 	if( $('#sensors-toggle').hasClass('toggle-button-on') ) { target = false; }
-	// 	else { target = true; }
-
-	// 	$.ajax({ url: '/agricoltura/methods/setSensors',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: target }),
-	// 		success: function(response) {
-	// 			$('#sensors-toggle').toggleClass('toggle-button-on');
-	// 		}
-	// 	});
-	// });
-
-	// $('#actuators-toggle').click(function(){
-	// 	if( $('#actuators-toggle').hasClass('toggle-button-on') ) { target = false; }
-	// 	else { target = true; }
-
-	// 	$.ajax({ url: '/agricoltura/methods/setActuators',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: target }),
-	// 		success: function(response) {
-	// 			$('#actuators-toggle').toggleClass('toggle-button-on');
-	// 		}
-	// 	});
-	// });
-
-	// $('#light-toggle').click(function(){
-	// 	if( $('#light-toggle').hasClass('toggle-button-on') ) { target = false; }
-	// 	else { target = true; }
-
-	// 	$.ajax({ url: '/agricoltura/methods/setLight',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: target }),
-	// 		success: function(response) {
-	// 			$('#light-toggle').toggleClass('toggle-button-on');
-	// 		}
-	// 	});
-	// });
-
-	// $('#irrigation-toggle').click(function(){
-	// 	if( $('#irrigation-toggle').hasClass('toggle-button-on') ) { target = false; }
-	// 	else { target = true; }
-
-	// 	$.ajax({ url: '/agricoltura/methods/setWater',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: target }),
-	// 		success: function(response) {
-	// 			$('#irrigation-toggle').toggleClass('toggle-button-on');
-	// 		}
-	// 	});
-	// });
-
-	// $('#fan-zero').click(function(){
-	// 	$.ajax({ url: '/agricoltura/methods/setFan',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: false, targetSpeed: 0 }),
-	// 		success: function(response) {
-	// 			$('#fan-toggle').attr('class', 'toggle-button toggle-button-zero');
-	// 		}
-	// 	});
-	// });
-
-	// $('#fan-one').click(function(){
-	// 	$.ajax({ url: '/agricoltura/methods/setFan',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: true, targetSpeed: 50 }),
-	// 		success: function(response) {
-	// 			$('#fan-toggle').attr('class', 'toggle-button toggle-button-on');
-	// 		}
-	// 	});
-	// });
-
-	// $('#fan-two').click(function(){
-	// 	$.ajax({ url: '/agricoltura/methods/setFan',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({ targetState: true, targetSpeed: 100 }),
-	// 		success: function(response) {
-	// 			$('#fan-toggle').attr('class', 'toggle-button toggle-button-two');
-	// 		}
-	// 	});
-	// });
+	function fill_dev_table() {
+		var content = '';
+		$.each(light_schedule, function( index, rule){
+			content += '<tr>';
+			content += '<td>'+rule[0]+'</td>'; 
+			content += '<td>'+rule[1]+'</td>';
+			content += '<td>'+rule[2]+'</td>';
+			content += '<td>'+rule[3]+'</td>';
+			content += '<td>'+rule[4]+'</td>';
+			content += '</tr>';			
+		});		
+		$('#light-table tbody').html(content);
+		$('#light-table>tbody>tr').click(function(){
+			click_light_table($(this));
+		});	
+		click_light_table($('#light-table>tbody>tr:first'));		
+	}
 
 	// $('#sensors-export').click(function(){
 	// 	$.ajax({ url: '/agricoltura/methods/getReadings',

@@ -1,6 +1,27 @@
 $(document).ready(function(){
 	var light_schedule;
 	var sel_rule_index; // if -1 then it's a new rule
+	var thresholds;
+	var chart;
+	var history = [null, null, null]; //temperature, humidity, soil moisture
+
+	chart = Highcharts.stockChart('current-chart', {
+		rangeSelector: {
+			buttons: [
+				{type: 'day', count: 1, text: '1d'},
+				{type: 'week', count: 1, text: '1w'},
+				{type: 'month', count: 1, text: '1m'},
+				{type: 'year', count: 1, text: '1y'},
+				{type: 'all',text: 'All'}
+			],
+			selected: 0
+		},
+		series: [{name: 'Temperature', tooltip: {valueDecimals: 1, valueSuffix: '°C'}}]
+	});
+
+	$('#temp-chart').click(drawTemperature);
+	$('#hum-chart').click(drawHumidity);
+	$('#moist-chart').click(drawSoilMoisture);	
 
 	$.getJSON('/agricoltura/methods/getLightSchedule', function(data){
 		light_schedule = data;
@@ -104,6 +125,9 @@ $(document).ready(function(){
 			$('#max-hum').val(data['max_hum']);
 			$('#min-moist').val(data['min_soil_moist']);
 			$('#max-moist').val(data['max_soil_moist']);
+
+			thresholds = data;
+			drawTemperature();
 		});
 	}
 
@@ -138,6 +162,67 @@ $(document).ready(function(){
 			click_light_table($(this));
 		});	
 		click_light_table($('#light-table>tbody>tr:first'));		
+	}
+
+	function drawTemperature() {
+		if (!history[0]) {
+			$.getJSON('/agricoltura/methods/getTempHistory', function(data){
+				history[0] = data;
+				drawTemperature();
+			});			
+		} else {
+			chart.yAxis[0].update({
+				title: {text: 'Temperature (°C)'},
+				plotLines: [
+					{value: thresholds['min_temp'], color: 'red', width: 1, label: {text: 'low', style:{color: 'red'}}, zIndex: 4},
+					{value: thresholds['max_temp'], color: 'red', width: 1, label: {text: 'high', style:{color: 'red'}}, zIndex: 4}
+				]
+			});
+			chart.setTitle({text: 'Temperature History'});
+			chart.series[0].update({name: 'Temperature', data: history[0], tooltip: {valueDecimals: 1, valueSuffix: '°C'}});
+			$('#history-chart>.blue-button-active').toggleClass('blue-button-active');
+			$('#temp-chart').toggleClass('blue-button-active');
+		}	
+	}
+
+	function drawHumidity() {
+		if (!history[1]) {
+			$.getJSON('/agricoltura/methods/getHumHistory', function(data){
+				history[1] = data;
+				drawHumidity();
+			});			
+		} else {
+			chart.yAxis[0].update({
+				title: {text: 'Humidity (%)'},
+				plotLines: [
+					{value: thresholds['max_hum'], color: 'red', width: 1, label: {text: 'high', style:{color: 'red'}}, zIndex: 4}
+				]
+			});
+			chart.setTitle({text: 'Humidity History'});
+			chart.series[0].update({name: 'Humidity', data: history[1], tooltip: {valueDecimals: 1, valueSuffix: '%'}})
+			$('#history-chart>.blue-button-active').toggleClass('blue-button-active');
+			$('#hum-chart').toggleClass('blue-button-active');
+		}	
+	}
+
+	function drawSoilMoisture() {
+		if (!history[2]) {
+			$.getJSON('/agricoltura/methods/getMoistHistory', function(data){
+				history[2] = data;
+				drawSoilMoisture();
+			});			
+		} else {
+			chart.yAxis[0].update({
+				title: {text: 'Soil Moisture (%)'},
+				plotLines: [
+					{value: thresholds['min_soil_moist'], color: 'red', width: 1, label: {text: 'low', style:{color: 'red'}}, zIndex: 4}
+				]
+			});
+			chart.setTitle({text: 'Soil Moisture History'});
+			chart.series[0].update({name: 'Soil Moisture', data: history[2], tooltip: {valueDecimals: 1, valueSuffix: '%'}})
+			$('#history-chart>.blue-button-active').toggleClass('blue-button-active');
+			$('#moist-chart').toggleClass('blue-button-active');
+		}	
 	}
 
 	// $('#sensors-export').click(function(){

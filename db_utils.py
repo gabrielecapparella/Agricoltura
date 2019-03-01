@@ -241,9 +241,9 @@ def setup(usr, pwd, db):
 	table_sensors = (
 		"CREATE TABLE `sensors_readings` ("
 		"  `datetime` BIGINT UNSIGNED NOT NULL,"
-		"  `temperature` DECIMAL(16, 1),"
-		"  `humidity` DECIMAL(16, 1),"
-		"  `moisture` DECIMAL(16, 1),"
+		"  `temperature` FLOAT(16, 1),"
+		"  `humidity` FLOAT(16, 1),"
+		"  `moisture` FLOAT(16, 1),"
 		"  PRIMARY KEY (`datetime`)"
 		") ENGINE=InnoDB")
 
@@ -252,9 +252,9 @@ def setup(usr, pwd, db):
 		"  `device` CHAR(10) NOT NULL,"
 		"  `start` BIGINT UNSIGNED NOT NULL,"
 		"  `end` BIGINT UNSIGNED NOT NULL,"
-		"  `kwh` DECIMAL(6, 4),"
-		"  `l` DECIMAL(6, 4),"
-		"  `cost` DECIMAL(6, 4),"
+		"  `kwh` FLOAT(6, 4),"
+		"  `l` FLOAT(6, 4),"
+		"  `cost` FLOAT(6, 4),"
 		"  PRIMARY KEY (`device`, `start`)"
 		") ENGINE=InnoDB")
 

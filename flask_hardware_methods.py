@@ -73,6 +73,14 @@ def set_sensors_state():
 def get_temp_history():
 	return json.dumps(current_app.db.get_readings(what='datetime, temperature'))
 
+@hardware_methods.route('/getHumHistory')
+def get_hum_history():
+	return json.dumps(current_app.db.get_readings(what='datetime, humidity'))
+
+@hardware_methods.route('/getMoistHistory')
+def get_moist_history():
+	return json.dumps(current_app.db.get_readings(what='datetime, moisture'))
+
 @hardware_methods.route('/setParameters', methods = ['POST'])
 def set_parameters():
 	if isAuthorized():
@@ -120,7 +128,6 @@ def export_readings():
 		data = request.get_json(force=True)
 		d_from = data['from']
 		d_to = data['to']
-		print('from: ',str(d_from),'to: ',str(d_to))
 		return json.dumps(current_app.db.get_readings(d_from, d_to))
 	else:
 		abort(403)

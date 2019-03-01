@@ -67,6 +67,10 @@ body {
 	cursor: pointer;
 }
 
+.blue-button-active {
+	background-color: #125d96;
+}
+
 h1.sec-title {
 	font-size: 30px;
 	margin: 30px auto;

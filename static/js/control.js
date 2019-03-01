@@ -1,10 +1,10 @@
 $(document).ready(function(){
 	var light_schedule;
-	var sel_rule_index;
+	var sel_rule_index; // if -1 then it's a new rule
 
 	$.getJSON('/agricoltura/methods/getLightSchedule', function(data){
-		raw_config = data;
-		fill_dev_table();
+		light_schedule = data;
+		fill_light_table();
 	});
 
 	getParameters();
@@ -37,34 +37,64 @@ $(document).ready(function(){
 
 	$('#reset-params').click(getParameters);
 
-	$('#edit-light-cfg').click(function(){
-		$.ajax({ url: '/agricoltura/methods/editLightCfg', 
+	$('#light-save').click(function(){
+		rule = [
+			$("#light-who").val(),
+			$("#light-when").val().replace("T", " "),
+			$("#light-duration").val(),
+			$("#light-interval").val(),
+			$("#light-enabled").val()
+		];
+
+		if (sel_rule_index < 0) { // Adding a new rule
+			light_schedule.push(rule);
+		} else { // Updating an old one
+			light_schedule[sel_rule_index] = rule
+		}
+		
+		saveLightSchedule();
+	});
+
+	$('#light-delete').click(function(){
+		if (sel_rule_index > -1) {
+			light_schedule.splice(sel_rule_index, 1);
+			saveLightSchedule();
+		}
+	});
+
+	$('#light-add').click(function(){
+		sel_rule_index = -1;
+		$("#light-who").val("");
+		$("#light-when").val("");
+		$("#light-duration").val("");
+		$("#light-interval").val("");
+		$("#light-enabled").val("");	
+	});
+
+	function saveLightSchedule() {
+		$.ajax({ url: '/agricoltura/methods/setLightSchedule', 
 			type: 'POST',
 			contentType: 'application/json',
 			dataType: 'json',
-			data: JSON.stringify({ 
-				name: sel_dev_name,
-				index: sel_dev_index,
-				cfg: usr_cfg
-			}),
+			data: JSON.stringify(light_schedule),
 			success: function(response) {
 				if(response["result"]) {
-					$('#edit-cfg-result').attr("class", "green");
-					$("#edit-cfg-result").text("OK");
-					raw_config = response["new_cfg"];
-					fill_dev_table();
+					$('#light-result').attr("class", "green");
+					$("#light-result").text("OK");
+					light_schedule = response["new_rules"];
+					fill_light_table();
 				} else {
-					$('#edit-cfg-result').attr("class", "red");
-					$("#edit-cfg-result").text("VALUE ERROR");									
+					$('#light-result').attr("class", "red");
+					$("#light-result").text(response["reason"]);									
 				}
 			},
 			error: function(response) {
-				$('#users-result').attr("class", "red");
-				$("#edit-cfg-result").text("ERROR");
+				$('light-result').attr("class", "red");
+				$("light-result").text("ERROR");
 			}
 		});
-		$("#edit-cfg-result").show();
-	});	
+		$("#light-result").show();		
+	}
 
 	function getParameters() {
 		$.getJSON('/agricoltura/methods/getParameters', function(data){
@@ -80,10 +110,19 @@ $(document).ready(function(){
 	function click_light_table(row) {
 		$('#light-table>tbody>tr').removeClass('checked-table-row');
 		$(row).toggleClass('checked-table-row');
-		sel_rule_index = $('tr').index(row)-1;	
+		sel_rule_index = $('tr').index(row)-1;
+
+		rule = light_schedule[sel_rule_index];
+
+		$("#light-who").val(rule[0]);
+		$("#light-when").val(rule[1].replace(" ", "T"));
+		$("#light-duration").val(rule[2]);
+		$("#light-interval").val(rule[3]);
+		$("#light-enabled").val(rule[4].toString());
+
 	}
 
-	function fill_dev_table() {
+	function fill_light_table() {
 		var content = '';
 		$.each(light_schedule, function( index, rule){
 			content += '<tr>';

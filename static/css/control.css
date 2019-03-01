@@ -28,17 +28,23 @@ select {
 	width: 100%;
 }
 
-#form-thresholds-bottom > .blue-button {
-	margin: 10px;
+#light-table-bottom {
+	display: flex;
+	justify-content: center;
+	width: 100%;
 }
 
-#form-light label {
-	width: 110px;
+#light-result {
+	text-align: center;
 }
 
 #light-when {
 	width: 220px;
 	margin-top: 10px;
+}
+
+#light-who {
+	width: 150px;
 }
 
 #form-light {

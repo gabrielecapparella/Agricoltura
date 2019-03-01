@@ -47,7 +47,7 @@ class Sensors:
 			self.parse_devices()
 			self.update_thresholds()
 			self.update_rates()
-			self.read_lights_schedule()
+			self.update_lights_schedule()
 			self.start()
 
 		except Exception as e:
@@ -122,38 +122,6 @@ class Sensors:
 		full_state["averages"] = self.last_reading
 		return full_state
 
-	def water_cycle_callback(self, dev):
-		try:
-			if dev.name in self.state[4]: self.state[4].remove(dev.name)
-			now = sensors_utils.unix_now()
-			kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
-			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-			self.db.insert_device_record((dev.name, dev.active_since, now, kwh, l, cost))
-		except Exception as e:
-			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
-
-	def check_lights_schedule(self, who=[]):
-		if not who: who = self.enabled_devs['grow_lights']
-		now = sensors_utils.get_now()
-		try:
-			for job in self.g_lights_schedule: #job = [when, how_many_hours, ]
-				if job[0]<=now:
-
-					if job[1]<0 and self.active_control[2]: #additional hours of light
-						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
-						if to_provide>0: job[1] = to_provide
-						else: continue
-
-					for name in who:
-						dev = self.devices[name]
-						dev.on_for_x_min(job[1]*60)
-						kwh = job[1]*dev.wattage/(3600*1000)
-						cost = kwh*self.rates["elec_price"]
-						self.db.insert_device_record((name, now, now+job[1]*1000, kwh, 0, cost)) #sistemare quel *1000
-					if job[3]: job[1]+=job[3]
-		except Exception as e:
-			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, traceback.format_exc()))
-
 	def update_thresholds(self, new_th = None):
 		if new_th: self.thresholds = new_th
 		else:
@@ -166,25 +134,56 @@ class Sensors:
 			with open('static/config/costs_rates.json', 'r') as rates_file:
 				self.rates = json.loads(rates_file.read())
 
-	def read_lights_schedule(self):
-		with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
-			jobs = json.loads(lights_file.read())
-			self.g_light_schedule = []
-			for job in jobs:
-				when = datetime.datetime.strptime(job[0], '%Y-%m-%d %H:%M')
-				hours = job[1]
-				interval = datetime.timedelta(seconds=job[2])
-				self.g_light_schedule.append([when, hours, interval])
+	def update_lights_schedule(self, new_schedule = None): #job = [who, when, duration, interval, enabled]
+		if not new_schedule:
+			with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
+				new_schedule = json.loads(lights_file.read())
+		self.g_light_schedule = []
+		for job in new_schedule:
+			when = datetime.datetime.strptime(job[1], '%Y-%m-%d %H:%M')
+			interval = datetime.timedelta(hours=float(job[3]))
+			self.g_light_schedule.append([job[0], when, job[2], interval, job[4]])
 
 	def write_lights_schedule(self):
 		with open('static/config/grow_lights_schedule.json', 'w') as lights_file:
 			schedule = []
 			for job in self.g_light_schedule:
-				when = job[0].strftime("%Y-%m-%d %H:%M")
-				hours = job[1]
-				interval = job[2].total_seconds()
-				schedule.append([when, hours, interval])
-			lights_file.write(str(schedule).replace("'", '"'))
+				when = job[1].strftime("%Y-%m-%d %H:%M")
+				interval = job[3].total_seconds()/3600
+				schedule.append([job[0], when, job[2], interval, job[4]])
+			lights_file.write(json.dumps(schedule, indent=4))
+
+	def check_lights_schedule(self, who=[]):
+		if not who: who = self.enabled_devs['grow_lights']
+		now = sensors_utils.get_now()
+		try:
+			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
+				if job[1]<=now and job[4]:
+					if job[2]<0 and self.active_control[2]: #additional hours of light
+						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
+						if to_provide>0: job[2] = to_provide
+						else: continue
+
+					for name in who.split(','):
+						dev = self.devices[name]
+						dev.on_for_x_min(job[1]*60)
+						kwh = job[2]*dev.wattage/(3600*1000)
+						cost = kwh*self.rates["elec_price"]
+						self.db.insert_device_record((name, now, now+job[2]*1000, kwh, 0, cost)) #sistemare quel *1000
+					if job[3]>0: job[1]+=job[3] #interval
+			self.write_lights_schedule()
+		except Exception as e:
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, traceback.format_exc()))
+
+	def water_cycle_callback(self, dev):
+		try:
+			if dev.name in self.state[4]: self.state[4].remove(dev.name)
+			now = sensors_utils.unix_now()
+			kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
+			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
+			self.db.insert_device_record((dev.name, dev.active_since, now, kwh, l, cost))
+		except Exception as e:
+			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
 
 	def start(self):
 		self.logger.info("Initiating...")

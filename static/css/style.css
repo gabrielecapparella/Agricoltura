@@ -58,11 +58,12 @@ body {
 	border: 1px solid #041726;
 	border-radius: 2px;
 	text-align: center;
-	margin: 0 auto;
+	margin: 10px;
 	padding: 3px;
 	background-color: #0C3C60;
 	color: white;
 	min-width: 60px;
+	max-width: 100px;
 	cursor: pointer;
 }
 

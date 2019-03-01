@@ -90,7 +90,29 @@ def set_parameters():
 
 @hardware_methods.route('/getParameters')
 def get_parameters():
-	return fread('static/config/thresholds.json')
+	if isAuthorized():
+		return fread('static/config/thresholds.json')
+	else:
+		abort(403)
+
+@hardware_methods.route('/getLightSchedule')
+def get_light_schedule():
+	if isAuthorized():
+		return fread('static/config/grow_lights_schedule.json')
+	else:
+		abort(403)
+
+@hardware_methods.route('/setLightSchedule', methods = ['POST'])
+def set_light_schedule():
+	if isAuthorized():
+		data = request.get_json(force=True)
+		# TODO some validity check on data
+		with open('static/config/grow_lights_schedule.json', 'w') as file:
+			file.write(json.dumps(data, indent=4))
+		current_app.sensors.update_lights_schedule(data)
+		return json.dumps({"result":True, "new_rules":data})
+	else:
+		abort(403)
 
 @hardware_methods.route('/getReadings', methods = ['POST'])
 def export_readings():

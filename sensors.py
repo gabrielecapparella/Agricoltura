@@ -358,6 +358,9 @@ class Sensors:
 			elif dev['model'] == 'grow_lights__simple_switch':
 				self.devices[dev['name']] =	devs.GrowLight(**dev)
 
+			else:
+				raise ValueError("Model {} not supported. Perhaps you made a typo?".format(dev['model']))
+
 			dev_type = dev['model'].split('__')[0]
 			if dev['enabled']: self.enabled_devs[dev_type].append(dev['name'])
 			return True

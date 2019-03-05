@@ -10,13 +10,6 @@ import os
 
 hardware_methods = Blueprint('hardware_methods', __name__)
 
-# @hardware_methods.route('/getLastReading')
-# def last_reading():
-# 	reading = current_app.db.get_last_reading()
-# 	dt = datetime_tz(datetime.datetime.fromtimestamp(reading[0]/1000))
-# 	dt = dt.strftime("%Y-%m-%d %H:%M:%S")
-# 	return jsonify(dt=dt, temp=reading[1], hum=reading[2], moist=reading[3])
-
 @hardware_methods.route('/getFullState')
 def get_full_state():
 	state = current_app.sensors.get_full_state()

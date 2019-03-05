@@ -94,26 +94,23 @@ class DB_Connection:
 			" VALUES (%s, %s, %s, %s, %s, %s)")
 		return self.insert(query, data)
 
-	def get_costs(self, date_from=None, date_to=None, what="device, start, end, kwh, l, cost"):
-		for c in [';', "'", '"']:
-			if c in what:
-				self.logger.warn("DB.get_costs: someone tried to inject evil characters -> {}".format(what))
-				return []
-
-		query = "SELECT {} FROM costs".format(what)
-
-		not_null = ''
-		for i in what.split(','): not_null+=' AND {} IS NOT NULL'.format(i)
-		not_null = not_null.replace(' AND', '', 1)
+	def get_costs(self, date_from=None, date_to=None):
+		query = "SELECT device, SUM(kwh), SUM(l), SUM(cost) FROM costs"
 
 		if (date_from) and (date_to):
-			return self.select(query+" WHERE start BETWEEN %s AND %s AND"+not_null, (date_from, date_to))
+			return self.select(query+" WHERE start BETWEEN %s AND %s", (date_from, date_to))
 		elif date_from:
-			return self.select(query+" WHERE start >= %s AND"+not_null, (date_from,))
-		elif (not date_from) and (not date_to):
-			return self.select(query+' WHERE'+not_null)
+			return self.select(query+" WHERE start >= %s", (date_from,))
+		elif date_to:
+			return self.select(query+" WHERE end <= %s", (date_to,))
 		else:
-			return []
+			return self.select(query)
+
+	def get_first_day(self):
+		query = "SELECT start FROM costs ORDER BY start LIMIT 1"
+		first_day = self.select(query)
+		if not first_day: return False
+		else: return first_day[0][0]
 
 	def insert_sensors_reading(self, data):
 		query = ("INSERT INTO sensors_readings "
@@ -252,9 +249,9 @@ def setup(usr, pwd, db):
 		"  `device` CHAR(10) NOT NULL,"
 		"  `start` BIGINT UNSIGNED NOT NULL,"
 		"  `end` BIGINT UNSIGNED NOT NULL,"
-		"  `kwh` FLOAT(6, 4),"
-		"  `l` FLOAT(6, 4),"
-		"  `cost` FLOAT(6, 4),"
+		"  `kwh` FLOAT(16, 4),"
+		"  `l` FLOAT(16, 4),"
+		"  `cost` FLOAT(16, 4),"
 		"  PRIMARY KEY (`device`, `start`)"
 		") ENGINE=InnoDB")
 

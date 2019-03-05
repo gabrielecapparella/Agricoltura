@@ -104,36 +104,57 @@
 
 		<section id="costs">
 			<h1 class="sec-title">Costs</h1>
-<!-- 			<table id="table-costs" class="table-sm table-hover table-bordered m-0 w-100">
-				<thead>
-					<tr>
-						<th scope="col">Entry</th>
-						<th scope="col">Quantity</th>
-						<th scope="col">Avg Daily Cost</th>
-						<th scope="col">Total Cost</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Electricity</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-					<tr>
-						<td>Water</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-					<tr>
-						<td>Fan</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-					<tr>
-						<td>Pump</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-					<tr>
-						<td>Lightbulb</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-					<tr>
-						<td>Server</td><td>-</td><td>-</td><td>-</td>
-					</tr>
-				</tbody>
-			</table> -->
+			<div class="cards">
+				<div id="form-costs">
+					<div class="input-group">
+						<label for="elec-price">Electricity (€/KWh):</label>
+						<input type="number" id="elec-price">
+					</div>
+					<div class="input-group">
+						<label for="water-price">Water (€/mc):</label>
+						<input type="number" id="water-price">
+					</div>
+					<div class="input-group">
+						<label for="server-w">Server (W):</label>
+						<input type="number" id="server-w">
+					</div>
+					<div id="form-costs-bottom">
+						<div id="costs-save" class="blue-button">Save</div>
+					</div>
+				</div>				
+				<div id="costs-table-container">
+					<table id="table-costs">
+						<thead>
+							<tr>
+								<th>Device</th>
+								<th>Quantity</th>
+								<th>Avg Daily Cost</th>
+								<th>Total Cost</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Electricity</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+							<tr>
+								<td>Water</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+							<tr>
+								<td>Fan</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+							<tr>
+								<td>Pump</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+							<tr>
+								<td>Lightbulb</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+							<tr>
+								<td>Server</td><td>-</td><td>-</td><td>-</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</section>
 		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/control.css') }}">
 		<script type="text/javascript" src="{{ url_for('static', filename='js/control.js') }}"></script>

@@ -47,11 +47,10 @@ def set_rates():
 def get_costs():
 	if isAuthorized():
 		data = request.get_json(force=True)
-
 		d_from = data['from']
 		d_to = data['to']
 
-		costs = current_app.db.get_costs(d_from, d_to)
+		costs_data = current_app.db.get_costs(d_from, d_to)
 
 		if not d_from: d_from = current_app.db.get_first_day()
 		else: d_from/=1000
@@ -60,11 +59,20 @@ def get_costs():
 		total_days = (d_to-d_from)/86400
 		if total_days<1: total_days = 1
 
-		costs_with_avg = []
-		for dev in costs:
-			costs_with_avg.append(dev+[dev[3]/total_days])
+		costs = []
+		for entry in costs_data:
+			dev = [None]*4
+			dev[0] = entry[0]
+			if entry[2]>0:
+				dev[1] = "{}kwh, {}l".format(entry[1], entry[2])
+			else:
+				dev[1] = "{}kwh".format(entry[1])
+			dev[2] = entry[3]/total_days
+			dev[3] = entry[3]
 
-		return json.dumps(costs_with_avg)
+			costs.append(dev)
+
+		return json.dumps(costs)
 	else:
  		abort(403)
 

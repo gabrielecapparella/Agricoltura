@@ -35,7 +35,7 @@
         "wattage": 5,
         "speed_pin": 16,
         "enabled": true,
-        "model": "fans__pwm_fan",
+        "model": "ventilation__pwm_fan",
         "pwm_frequency": 25000
     },
     {
@@ -52,7 +52,21 @@
         "enabled": true,
         "model": "grow_lights__simple_switch",
         "power_pin": 21,
-        "wattage": 110,
+        "wattage": 50,
         "name": "led_light_50W"
+    },
+    {
+        "enabled": true,
+        "model": "heating__simple_switch",
+        "power_pin": 22,
+        "wattage": 150,
+        "name": "halogen_light_150W"
+    },
+    {
+        "enabled": true,
+        "model": "heating__simple_switch",
+        "power_pin": 23,
+        "wattage": 200,
+        "name": "halogen_light_200W"
     }
 ]

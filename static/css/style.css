@@ -210,7 +210,7 @@ section {
 .toggle-button-two .two { background-color: #28a745; }
 .toggle-button-two .zero, .one { background-color: transparent; }
 
-#dev-table-container, #light-table-container {
+#dev-table-container {
 	width: 550px;
 	margin: 10px;
 }

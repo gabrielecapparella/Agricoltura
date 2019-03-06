@@ -9,8 +9,9 @@ import sensors_utils
 import os
 
 class Switch:
-	def __init__(self, name, power_pin, wattage, **kwargs):
+	def __init__(self, name, model, power_pin, wattage, **kwargs):
 		self.name = name
+		self.model_type = model.split("__")[0]
 		self.pin = power_pin #BCM
 		self.state = False
 		self.active_since = None
@@ -41,8 +42,8 @@ class Switch:
 		return self.active_since
 
 class Irrigation(Switch):
-	def __init__(self, name, power_pin, wattage, water_flow, cycle_water_time=1, cycle_spread_time=10, **kwargs):
-		super().__init__(name, power_pin, wattage)
+	def __init__(self, name, model, power_pin, wattage, water_flow, cycle_water_time=1, cycle_spread_time=10, **kwargs):
+		super().__init__(name, model, power_pin, wattage)
 		self.watering_state = 0 #0:inactive, 1:watering, 2:propagating
 		self.water_time = cycle_water_time
 		self.spread_time = cycle_spread_time
@@ -75,8 +76,8 @@ class Irrigation(Switch):
 			if callback: callback(self)
 
 class Fan(Switch):
-	def __init__(self, name, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):
-		super().__init__(name, power_pin, wattage)
+	def __init__(self, name, model, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):
+		super().__init__(name, model, power_pin, wattage)
 		self.speed = 100
 
 		GPIO.setmode(GPIO.BCM)
@@ -114,8 +115,8 @@ class Fan(Switch):
 		return 0
 
 class GrowLight(Switch):
-	def __init__(self, name, power_pin, wattage, **kwargs):
-		super().__init__(name, power_pin, wattage)
+	def __init__(self, name, model, power_pin, wattage, **kwargs):
+		super().__init__(name, model, power_pin, wattage)
 		self.timer = sensors_utils.TimerWrap()
 
 	def on_for_x_min(self, minutes):
@@ -148,8 +149,9 @@ class SoilMoistureSensor:
 		return self.last_reading
 
 class SHT31:
-	def __init__(self, name, bus, address, **kwargs):
+	def __init__(self, name, model, bus, address, **kwargs):
 		self.name = name
+		self.model_type = model.split("__")[0]
 		self.bus = bus
 		if isinstance(address, str): address = int(address, 16)
 		self.address = address
@@ -172,8 +174,9 @@ class SHT31:
 		return self.last_reading
 
 class DHT22:
-	def __init__(self, name, read_pin, max_reading_attempts=3, **kwargs):
+	def __init__(self, name, model, read_pin, max_reading_attempts=3, **kwargs):
 		self.name = name
+		self.model_type = model.split("__")[0]
 		self.pin = read_pin
 		self.attempts = max_reading_attempts
 		self.last_reading = None
@@ -196,8 +199,9 @@ class DHT22:
 		return self.last_reading
 
 class IP_Camera:
-	def __init__(self, name, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
+	def __init__(self, name, model, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
 		self.name = name
+		self.model_type = model.split("__")[0]
 		self.usr = usr
 		self.pwd = pwd
 		self.ip = ip

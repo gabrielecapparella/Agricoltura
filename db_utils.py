@@ -90,12 +90,12 @@ class DB_Connection:
 
 	def insert_device_record(self, data):
 		query = ("INSERT INTO costs"
-			" (device, start, end, kwh, l, cost)"
-			" VALUES (%s, %s, %s, %s, %s, %s)")
+			" (device, model_type, start, end, kwh, l, cost)"
+			" VALUES (%s, %s, %s, %s, %s, %s, %s)")
 		return self.insert(query, data)
 
 	def get_costs(self, date_from=None, date_to=None):
-		query = "SELECT device, SUM(kwh), SUM(l), SUM(cost) FROM costs"
+		query = "SELECT model_type, SUM(kwh), SUM(l), SUM(cost) FROM costs"
 
 		if (date_from) and (date_to):
 			return self.select(query+" WHERE start BETWEEN %s AND %s", (date_from, date_to))
@@ -246,7 +246,8 @@ def setup(usr, pwd, db):
 
 	table_costs = (
 		"CREATE TABLE `costs` ("
-		"  `device` CHAR(10) NOT NULL,"
+		"  `device` CHAR(64) NOT NULL,"
+		"  `model_type` CHAR(64) NOT NULL,"
 		"  `start` BIGINT UNSIGNED NOT NULL,"
 		"  `end` BIGINT UNSIGNED NOT NULL,"
 		"  `kwh` FLOAT(16, 4),"

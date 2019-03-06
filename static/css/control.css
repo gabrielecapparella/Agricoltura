@@ -56,17 +56,22 @@ select {
 	justify-content: center;
 }
 
-#form-light-bottom {
+#form-light-bottom, #form-costs-bottom {
 	display: flex;
 	justify-content: center;
 	border-top: 1px solid grey;
 	width: 100%;
 }
 
-#light-table {
+#light-table, #costs-table {
 	border-collapse: collapse;
 	width: 100%;
 	padding: 10px;
+}
+
+#light-table-container {
+	width: 550px;
+	margin: 10px;
 }
 
 #edit-light-cfg {
@@ -92,4 +97,18 @@ select {
 .chart {
 	width: 600px;
 	height: 300px;
+}
+
+#form-costs {
+	border:1px solid black;
+	width: 230px;
+	height: 170px;
+	margin: auto 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#costs-table-container {
+	margin: 10px;
 }

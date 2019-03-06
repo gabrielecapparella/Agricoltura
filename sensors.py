@@ -98,7 +98,7 @@ class Sensors:
 					else: l = 0
 					kwh = time*dev.wattage/3600000
 					cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-					self.db.insert_device_record((dev.name, active_since, now, kwh, l, cost))
+					self.db.insert_device_record((dev.name, dev.model_type, active_since, now, kwh, l, cost))
 		except Exception as e:
 			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, traceback.format_exc()))
 
@@ -169,7 +169,7 @@ class Sensors:
 						dev.on_for_x_min(job[1]*60)
 						kwh = job[2]*dev.wattage/(3600*1000)
 						cost = kwh*self.rates["elec_price"]
-						self.db.insert_device_record((name, now, now+job[2]*1000, kwh, 0, cost)) #sistemare quel *1000
+						self.db.insert_device_record((name, dev.model_type, now, now+job[2]*1000, kwh, 0, cost)) #sistemare quel *1000
 					if job[3]>0: job[1]+=job[3] #interval
 			self.write_lights_schedule()
 		except Exception as e:
@@ -181,7 +181,7 @@ class Sensors:
 			now = sensors_utils.unix_now()
 			kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
 			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
-			self.db.insert_device_record((dev.name, dev.active_since, now, kwh, l, cost))
+			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, now, kwh, l, cost))
 		except Exception as e:
 			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
 
@@ -343,7 +343,7 @@ class Sensors:
 			elif dev['model'] == 'temp_hum_sensors__SHT31':
 				self.devices[dev['name']] = devs.SHT31(bus=self.bus, **dev)
 
-			elif dev['model'] == 'fans__pwm_fan':
+			elif dev['model'] == 'ventilation__pwm_fan':
 				self.devices[dev['name']] = devs.Fan(**dev)
 
 			elif dev['model'] == 'cameras__ip_camera':

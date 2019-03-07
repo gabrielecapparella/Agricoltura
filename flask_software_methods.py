@@ -64,11 +64,11 @@ def get_costs():
 			dev = [None]*4
 			dev[0] = entry[0]
 			if entry[2]>0:
-				dev[1] = "{}kwh, {}l".format(entry[1], entry[2])
+				dev[1] = "{:.3f} kwh, {:.3f} l".format(entry[1], entry[2])
 			else:
 				dev[1] = "{}kwh".format(entry[1])
-			dev[2] = entry[3]/total_days
-			dev[3] = entry[3]
+			dev[2] = "{:.3f} €".format(entry[3]/total_days)
+			dev[3] = "{:.3f} €".format(entry[3])
 
 			costs.append(dev)
 

@@ -22,6 +22,7 @@ body {
 	top: 0;
 	width: 100%;
 	box-sizing: border-box;
+	z-index: 10;
 }
 
 #navbar a{
@@ -111,6 +112,12 @@ section {
 	flex-wrap: wrap;
 	justify-content: space-between;
 	margin: 10px;
+
+}
+
+.input-group > label{
+	margin-right: 10px;
+	vertical-align: middle;
 }
 
 .cards {

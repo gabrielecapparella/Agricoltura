@@ -21,10 +21,6 @@ def logout():
 	session.clear()
 	return redirect(url_for('web_interface.index'))
 
-@web_interface.route('/monitor')
-def monitor():
-	return render_template('monitor.html', title="Monitor", time=str(time.time()))
-
 @web_interface.route('/devices')
 def devices():
 	full_state = current_app.sensors.get_full_state()
@@ -36,10 +32,10 @@ def control():
 		return render_template('control.html', title="Control")#, user=session['user']) REMOVE BEFORE FLIGHT
 	else: abort(403)
 
-@web_interface.route('/manage')
+@web_interface.route('/system')
 def system():
 	if isAdmin():
-		return render_template('system.html', title="Manage", user=session['user'])
+		return render_template('system.html', title="System", user=session['user'])
 	else: abort(403)
 
 @web_interface.route('/snapshot')

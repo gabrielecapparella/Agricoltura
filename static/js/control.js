@@ -30,6 +30,8 @@ $(document).ready(function(){
 
 	getParameters();
 
+	fill_costs_table();
+
 	$('#update-params').click(function(){
 		$.ajax({ url: '/agricoltura/methods/setParameters',
 			type: 'POST',
@@ -91,6 +93,8 @@ $(document).ready(function(){
 		$("#light-interval").val("");
 		$("#light-enabled").val("");	
 	});
+
+	$('#costs-ok').click(fill_costs_table);
 
 	function saveLightSchedule() {
 		$.ajax({ url: '/agricoltura/methods/setLightSchedule', 
@@ -163,6 +167,30 @@ $(document).ready(function(){
 		});	
 		click_light_table($('#light-table>tbody>tr:first'));		
 	}
+
+	function fill_costs_table() {
+		$.ajax({ url: '/agricoltura/methods/getCosts',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				from: new Date($("#costs-from").val()).getTime(),
+				to: new Date($("#costs-to").val()).getTime()
+			}),
+			dataType: 'json',
+			success: function(response) {		
+				var content = '';
+				$.each(response, function(index, model_type){
+					content += '<tr>';
+					content += '<td>'+model_type[0]+'</td>'; 
+					content += '<td>'+model_type[1]+'</td>';
+					content += '<td>'+model_type[2]+'</td>';
+					content += '<td>'+model_type[3]+'</td>';
+					content += '</tr>';			
+				});
+				$('#costs-table tbody').html(content);
+			}
+		});
+	}	
 
 	function drawTemperature() {
 		if (!history[0]) {
@@ -254,26 +282,6 @@ $(document).ready(function(){
 	// 		}
 	// 	});
 	// });
-
-	// function getCosts() {
-	// 	$.ajax({ url: '/agricoltura/methods/getCosts',
-	// 		type: 'POST',
-	// 		contentType: 'application/json',
-	// 		data: JSON.stringify({
-	// 			from: new Date($("#costs-from").val()).getTime(),
-	// 			to: new Date($("#costs-to").val()).getTime()
-	// 		}),
-	// 		dataType: 'json',
-	// 		success: function(response) {
-	// 			var table = $("#table-costs tbody")[0], i, j;
-	// 			for(i=0; i<6; i++) {
-	// 				for(j=0; j<3; j++) {
-	// 					$(table.rows[i].cells[j+1]).html(response[i][j]);
-	// 				}
-	// 			}
-	// 		}
-	// 	});
-	// }
 
 	// function download(filename, text) {
 	// 	var element = document.createElement('a');

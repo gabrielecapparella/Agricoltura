@@ -215,11 +215,13 @@ class DB_Connection:
 	def insert_random_act_record(self): #for testing
 		now = self.unix_now()
 		random_data = (
-			'fan',
+			'fan_01',
+			'ventilation',
 			now,
 			now+random.randint(1000, 60000),
 			1,
-			1
+			2,
+			3
 		)
 		return self.insert_device_record(random_data)
 

@@ -122,37 +122,32 @@
 						<div id="costs-save" class="blue-button">Save</div>
 					</div>
 				</div>				
-				<div id="costs-table-container">
-					<table id="costs-table">
-						<thead>
-							<tr>
-								<th>Device</th>
-								<th>Quantity</th>
-								<th>Avg Daily Cost</th>
-								<th>Total Cost</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>Electricity</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-							<tr>
-								<td>Water</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-							<tr>
-								<td>Fan</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-							<tr>
-								<td>Pump</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-							<tr>
-								<td>Lightbulb</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-							<tr>
-								<td>Server</td><td>-</td><td>-</td><td>-</td>
-							</tr>
-						</tbody>
-					</table>
+				<div id="costs-table-column">
+					<div id="form-period-costs">
+						<div class="input-group">
+							<label for="costs-from">From:</label>
+							<input type="date" id="costs-from">
+						</div>
+						<div class="input-group">
+							<label for="costs-to">To:</label>
+							<input type="date" id="costs-to">
+						</div>
+						<div id="costs-ok" class="blue-button">Ok</div>
+					</div>
+					<div id="costs-table-container">
+						<table id="costs-table">
+							<thead>
+								<tr>
+									<th>Device</th>
+									<th>Quantity</th>
+									<th>Avg Daily Cost</th>
+									<th>Total Cost</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		</section>

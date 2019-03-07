@@ -32,7 +32,7 @@ class Sensors:
 			self.enabled_devs = {
 				'soil_moist_sensors': [],
 				'temp_hum_sensors': [],
-				'fans': [],
+				'ventilation': [],
 				'cameras': [],
 				'irrigation': [],
 				'heating': [],

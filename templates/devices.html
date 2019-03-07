@@ -41,7 +41,7 @@
 				{% endif %}
 			</div>
 			<div class="cards">
-				{% if devs['fans'] %}
+				{% if devs['ventilation'] %}
 				<div id="card-fan" class="card">
 					<div class="card-title">Ventilation</div>
 					{% if devs['active_control'][0] %}
@@ -49,7 +49,7 @@
 					{% else %}
 					<div class="red card-act-switch">MAN</div>
 					{% endif %}
-					{% for name, state in devs['fans'].items() %}
+					{% for name, state in devs['ventilation'].items() %}
 					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
 						{% if not state[0] %}

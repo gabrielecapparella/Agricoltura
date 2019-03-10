@@ -1,0 +1,59 @@
+#status-container {
+	border:1px solid black;
+	max-width: 400px;
+	display: flex;
+	flex-wrap: wrap;
+	margin: 10px auto;
+	justify-content: center;
+}
+
+.status-group {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	margin: 10px;
+}
+
+.status-output {
+	border: 1px solid black;
+	width: 70px;
+	height: 20px;
+	text-align: center;
+	font-size: 16px;
+	margin: 5px;
+}
+
+.status-label {
+	width: 80px;
+	margin: 5px;
+}
+
+#logs-container {
+	border:1px solid black;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin: 10px auto;
+}
+
+#logs-bottom {
+	display: flex;
+	justify-content: center;
+	border-top: 1px solid grey;
+	flex-wrap: wrap;
+}
+
+#logs-textarea {
+	overflow: auto;
+	min-height: 300px;
+	margin: 10px;
+	width: 600px;
+}
+
+@media only screen and (max-width: 650px) {
+	#logs-textarea { width: 400px; }
+}
+
+.blue-button {
+	width: 100px;
+}

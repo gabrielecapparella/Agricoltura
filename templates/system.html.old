@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+{% block body %}
+	<body data-spy="scroll" data-target="#navbar" data-offset="70">
+		<h1>System</h1>
+		
+		<nav id="navbar" class="navbar navbar-expand-sm navbar-dark fixed-top">
+			<a class="navbar-brand" href="#">System</a>
+			<span class="navbar-text ml-auto">Hi, {{ user }}</span>
+			<ul class="nav navbar-nav ml-5">
+				<li class="nav-item">
+					<a class="nav-link" href="#status">Status</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#logs">Logs</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#users">Users</a>
+				</li>
+			</ul>
+			<a href="{{ url_for('web_interface.index') }}" class="btn btn-outline-light btn-sm ml-2" role="button">Index</a>
+		</nav>
+		<section id="status" class="container-fluid text-center p-5">
+			<h3>Status</h3>
+			<div class="container border rounded border-dark mx-auto mt-4" style="width:530px; font-size: 14px;">
+				<div class="row pb-2 pt-3">
+					<div class="col-2 text-left pr-0">Cpu temp</div>
+					<div class="col-3 p-0 mr-1">
+						<div id="cpu-temp" class="p-0 m-0 p-0 border border-dark my-card-output">-</div>
+					</div>
+					<div class="col-2 text-left ml-3">Storage</div>
+					<div class="col">		
+						<div class="progress">
+							<div id="storage" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+						</div>
+					</div>						
+				</div>
+				
+				<div class="row pb-3">
+					<div class="col-2 text-left">Uptime</div>
+					<div class="col-3 p-0 mr-1">
+						<div id="uptime" class="p-0 border border-dark my-card-output-big m-0">-</div>
+					</div>
+						
+					<div class="col-2 text-left ml-3">RAM</div>
+					<div class="col">		
+						<div class="progress">
+							<div id="ram" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+						</div>
+					</div>														
+				</div>
+				<div class="row border-dark border-top p-2">
+					<div class="col text-center">
+						<a id="poweroff" class="btn text-light btn-sm my-btn-small">Shutdown</a>		
+						<a id="reboot" class="btn text-light btn-sm my-btn-small">Reboot</a>	
+					</div>
+				</div>
+			</div>		
+		</section>
+		
+		<section id="logs" class="container-fluid text-center p-5 colored-section">
+			<h3>Logs</h3>
+			<div class="container border rounded border-dark my-4" style="width: 670px">
+				<div class="row row-auto justify-content-center p-2">
+					<textarea id="current-log" class="col-auto"></textarea>
+				</div>
+				<div class="row border-dark border-top p-2">
+					<div id="log-btns" class="col text-center">
+						<a id="error-log" class="btn text-light btn-sm my-btn">Flask Error</a>
+						<a id="access-log" class="btn text-light btn-sm my-btn">Flask Access</a>
+						<a id="sensors-log" class="btn text-light btn-sm my-btn">Sensors</a>
+						<a id="db-log" class="btn text-light btn-sm my-btn">DB_Utils</a>
+					</div>
+				</div>
+			</div>		
+		</section>
+		
+		<section id="users" class="container-fluid text-center p-5">
+			<h3>Users</h3>
+			
+			<div class="container border rounded border-dark mt-4 mb-2" style="width: 600px">
+				<div class="row row-auto justify-content-center p-2">
+					<table id="table-users" class="table-sm table-hover table-bordered m-1 w-100">
+						<thead>
+							<tr>
+								<th scope="col">Username</th>
+								<th scope="col">Type</th>
+								<th scope="col">API key</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+				<div class="row border-dark border-top p-2">
+					<div class="col text-center">
+						<button type="button" id="new-user" class="btn text-light btn-sm my-btn m-1" data-toggle="modal" data-target="#modal-add-user">Add</button>
+						<button type="button" id="del-user" class="btn text-light btn-sm my-btn m-1">Delete</button>
+						<button type="button" id="new-api-key" class="btn text-light btn-sm my-btn m-1">New API key</button>
+					</div>
+				</div>
+			</div>
+			<p id="users-result" class="text-monospace"></p>
+			
+			<div class="modal fade" id="modal-add-user" tabindex="-1" role="dialog" aria-labelledby="Add User" aria-hidden="true">
+				<div class="modal-dialog modal-sm" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" id="exampleModalLabel">Add User</h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body px-3">
+							<form>
+								<div class="form-group row p-2 mb-0">
+									<label for="new-user-username" class="col-sm-4 col-form-label">Username</label>
+									<div class="col">
+										<input type="text" class="form-control my-card-input-big ml-auto form-control-sm" id="new-user-username">
+									</div>
+								</div>
+								<div class="form-group row p-2 mb-0">
+									<label for="new-user-password" class="col-sm-4 col-form-label">Password</label>
+									<div class="col">
+										<input type="password" class="form-control my-card-input-big ml-auto form-control-sm" id="new-user-password">
+									</div>
+								</div>
+								<div class="form-group row p-2 text-left">
+									<label for="new-user-check" class="col-sm-6 col-form-label">Administrator</label>
+									<div class="col-auto">
+										<input class="form-check-input my-checkbox" type="checkbox" id="new-user-check">
+									</div>
+								</div>								
+							</form>
+						</div>
+					<div class="modal-footer">
+						<button id="new-user-confirm" type="button" class="btn btn-primary btn-sm my-btn m-auto">Confirm</button>
+					</div>
+				</div>
+			</div>					
+		</section>
+		
+		<script type="text/javascript" src="{{ url_for('static', filename='js/system.js') }}"></script>
+	</body>
+{% endblock %}	

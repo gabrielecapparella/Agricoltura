@@ -34,9 +34,10 @@ def control():
 
 @web_interface.route('/system')
 def system():
-	if isAdmin():
-		return render_template('system.html', title="System", user=session['user'])
-	else: abort(403)
+	# if isAdmin():
+	# 	return render_template('system.html', title="System", user=session['user'])
+	# else: abort(403)
+	return render_template('system.html', title="System")
 
 @web_interface.route('/snapshot')
 def snapshot():

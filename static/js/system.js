@@ -94,13 +94,6 @@ $(document).ready(function(){
 		}
 	});
 
-	function close_modal() {
-		$('#modal-add-user').modal('hide');
-		$("#new-user-username").val('');
-		$("#new-user-password").val('');
-		$("#new-user-check").prop('checked', false);				
-	}
-
 	function getLog(where, what) {
 		$.get(where, function(data){
 			$('#current-log').text(data);
@@ -133,16 +126,7 @@ $(document).ready(function(){
 		});
 	}
 	
-	$.getJSON('/agricoltura/methods/getSystemStatus', function(data){
-		$('#cpu-temp').html(data['cpu_temp']);
-		$('#uptime').html(data['uptime']);
-		$('#storage').attr('aria-valuenow', data['st_perc']);
-		$('#storage').attr('style', 'width: '+data['st_perc']+'%');
-		$('#ram').attr('aria-valuenow', data['mem_perc']);
-		$('#ram').attr('style', 'width: '+data['mem_perc']+'%');		
-	});
-	
-	$('#poweroff').click(function(){$.get('/agricoltura/methods/poweroff');});
-	$('#reboot').click(function(){$.get('/agricoltura/methods/reboot');});
+	// $('#poweroff').click(function(){$.get('/agricoltura/methods/poweroff');});
+	// $('#reboot').click(function(){$.get('/agricoltura/methods/reboot');});
 		
 });

@@ -2,7 +2,7 @@
 
 from flask import current_app, Blueprint, redirect, url_for, render_template, session, abort, send_file
 from flask_software_methods import isAuthorized, isAdmin
-import time
+from flask_hardware_methods import sys_status
 import os
 
 web_interface = Blueprint('web_interface', __name__, template_folder='templates', static_folder="static")
@@ -34,10 +34,9 @@ def control():
 
 @web_interface.route('/system')
 def system():
-	# if isAdmin():
-	# 	return render_template('system.html', title="System", user=session['user'])
-	# else: abort(403)
-	return render_template('system.html', title="System")
+	if isAdmin():
+		return render_template('system.html', title="System", status=sys_status())
+	else: abort(403)
 
 @web_interface.route('/snapshot')
 def snapshot():

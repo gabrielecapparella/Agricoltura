@@ -1,6 +1,11 @@
+input {
+	width: 100px;
+	text-align: center;
+}
+
 #status-container {
 	border:1px solid black;
-	max-width: 400px;
+	max-width: 450px;
 	display: flex;
 	flex-wrap: wrap;
 	margin: 10px auto;
@@ -16,10 +21,9 @@
 
 .status-output {
 	border: 1px solid black;
-	width: 70px;
+	width: 100px;
 	height: 20px;
 	text-align: center;
-	font-size: 16px;
 	margin: 5px;
 }
 
@@ -56,4 +60,25 @@
 
 .blue-button {
 	width: 100px;
+}
+
+#form-users {
+	border:1px solid black;
+/*	max-width: 250px;*/	
+	margin: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#users-table {
+	border-collapse: collapse;
+	width: 100%;
+	padding: 10px;
+	text-align: center;
+}
+
+#users-table-container {
+	width: 300px;
+	margin: 10px;
 }

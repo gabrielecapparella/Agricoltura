@@ -145,29 +145,33 @@ def get_rpi_temp():
 @hardware_methods.route('/getSystemStatus')
 def get_system_status():
 	if isAdmin():
-		uptime = fread('/proc/uptime')
-		td = datetime.timedelta(seconds=float(uptime.split()[0]))
-		uptime = "{}d {}h {}m".format(td.days, td.seconds//3600, (td.seconds//60)%60)
-
-		cpu_temp = fread('/sys/class/thermal/thermal_zone0/temp')
-		cpu_temp = float(cpu_temp)/1000
-		cpu_temp = str(round(cpu_temp, 1))+"°C"
-
-		stat = os.statvfs('/')
-		tot = stat.f_blocks * stat.f_frsize / 10**9
-		free = stat.f_bavail*stat.f_frsize / 10**9
-		used = tot-free
-		st_perc = round(used*100/tot)
-
-		mem_info = fread('/proc/meminfo')
-		mem_tot = int(re.search('MemTotal:\s+([0-9]+)\skB', mem_info).group(1))
-		mem_free = int(re.search('MemAvailable:\s+([0-9]+)\skB', mem_info).group(1))
-		mem_used = mem_tot-mem_free
-		mem_perc = round(mem_used*100/mem_tot)
-
-		return jsonify(uptime=uptime, cpu_temp=cpu_temp, st_perc=st_perc, mem_perc=mem_perc)
+		return json.dumps(sys_status())
 	else:
 		abort(403)
+
+def sys_status():
+	status = {}
+
+	uptime = fread('/proc/uptime')
+	td = datetime.timedelta(seconds=float(uptime.split()[0]))
+	status['uptime'] = "{}d {}h {}m".format(td.days, td.seconds//3600, (td.seconds//60)%60)
+
+	cpu_temp = fread('/sys/class/thermal/thermal_zone0/temp')
+	cpu_temp = float(cpu_temp)/1000
+	status['cpu_temp'] = round(cpu_temp, 1)
+
+	stat = os.statvfs('/')
+	status['disk_tot'] = round(stat.f_blocks * stat.f_frsize / 10**9, 1)
+	free = stat.f_bavail*stat.f_frsize / 10**9
+	status['disk_used'] = round(status['disk_tot']-free, 1)
+
+	mem_info = fread('/proc/meminfo')
+	mem_tot = int(re.search('MemTotal:\s+([0-9]+)\skB', mem_info).group(1))
+	status['mem_tot'] = round(mem_tot / 10**6, 1)
+	mem_free = int(re.search('MemAvailable:\s+([0-9]+)\skB', mem_info).group(1))/ 10**6
+	status['mem_used'] = round(status['mem_tot']-mem_free, 1)
+
+	return status
 
 @hardware_methods.route('/shutdown') #flask
 def shutdown_server():

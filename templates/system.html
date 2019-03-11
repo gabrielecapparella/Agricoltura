@@ -6,20 +6,20 @@
 			<div id="status-container">
 				<div class="status-group">
 					<div class="status-label">Cpu temp:</div>
-					<div id="status-cpu-temp" class="status-output"></div>
+					<div id="status-cpu-temp" class="status-output">{{status['cpu_temp']}}°C</div>
 				</div>
 				<div class="status-group">
 					<div class="status-label">Storage:</div>
-					<div id="status-storage" class="status-output"></div>
+					<div id="status-storage" class="status-output">{{status['disk_used']}}/{{status['disk_tot']}}GB</div>
 				</div>
 				<div class="status-group">
 					<div class="status-label">RAM:</div>
-					<div id="status-ram" class="status-output"></div>
+					<div id="status-ram" class="status-output">{{status['mem_used']}}/{{status['mem_tot']}}GB</div>
 				</div>
 				<div class="status-group">
 					<div class="status-label">Uptime:</div>
-					<div id="status-uptime" class="status-output"></div>
-				</div>				
+					<div id="status-uptime" class="status-output">{{status['uptime']}}</div>
+				</div>		
 			</div>
 		</section>
 		<section id="logs">
@@ -32,6 +32,49 @@
 					<div id="logs-main" class="blue-button">Main</div>
 					<div id="logs-sensors" class="blue-button">Sensors</div>
 					<div id="logs-db" class="blue-button">Database</div>	
+				</div>
+			</div>
+		</section>
+		<section id="users">
+			<h1 class="sec-title">Users</h1>
+			<div class="cards">
+				<div id="users-table-container">
+					<table id="users-table">
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Type</th>
+								<th>API key</th>
+							</tr>
+						</thead>
+						<tbody>	
+						</tbody>
+					</table>
+					<div id="users-table-bottom">
+						<div id="users-delete" class="blue-button">Delete</div>
+						<div id="users-new-api" class="blue-button">New API key</div>
+					</div>
+				</div>
+				<div id="form-users">
+					<div class="input-group">
+						<label for="users-username">Username:</label>
+						<input type="text" id="users-username">
+					</div>
+					<div class="input-group">
+						<label for="users-pwd">Password:</label>
+						<input type="password" id="users-pwd">
+					</div>
+					<div class="input-group">
+						<label for="users-pwd-confirm">Confirm password:</label>
+						<input type="password" id="users-pwd-confirm">
+					</div>
+					<div class="input-group">
+						<label for="users-admin">Administrator:</label>
+						<input type="checkbox" id="users-admin">
+					</div>
+					<div id="form-users-bottom">
+						<div id="users-add" class="blue-button">Add</div>
+					</div>
 				</div>
 			</div>
 		</section>

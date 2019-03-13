@@ -41,7 +41,7 @@ def setup():
 
 def teardown_handler(signal, frame):
 	clean_up()
-	raise SystemExit#KeyboardInterrupt
+	raise SystemExit #KeyboardInterrupt
 
 def clean_up():
 	signal.signal(signal.SIGINT, signal.SIG_DFL)

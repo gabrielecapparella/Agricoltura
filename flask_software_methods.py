@@ -76,10 +76,10 @@ def get_costs():
 	else:
  		abort(403)
 
-@software_methods.route('/getErrorLog')
+@software_methods.route('/getMainLog')
 def get_error_log():
 	if isAdmin():
-		return fread('static/log/gunicorn_error.log')
+		return fread('static/log/main.log')
 	else:
 		abort(403)
 

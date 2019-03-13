@@ -135,13 +135,6 @@ def export_actuators():
 	else:
 		abort(403)
 
-@hardware_methods.route('/getRpiTemp')
-def get_rpi_temp():
-	cpu_temp = fread('/sys/class/thermal/thermal_zone0/temp')
-	cpu_temp = float(cpu_temp)/1000
-	cpu_temp = round(cpu_temp, 1)
-	return jsonify(rpi_temp=cpu_temp)
-
 @hardware_methods.route('/getSystemStatus')
 def get_system_status():
 	if isAdmin():

@@ -1,50 +1,22 @@
 $(document).ready(function(){
-	$('#error-log').click(function(){getLog('/agricoltura/methods/getErrorLog', $(this));});
-	$('#access-log').click(function(){getLog('/agricoltura/methods/getAccessLog', $(this));});
-	$('#sensors-log').click(function(){getLog('/agricoltura/methods/getSensorsLog', $(this));});
-	$('#db-log').click(function(){getLog('/agricoltura/methods/getDbLog', $(this));});
+	$('#logs-main').click(function(){getLog('/agricoltura/methods/getMainLog', $(this));});
+	$('#logs-sensors').click(function(){getLog('/agricoltura/methods/getSensorsLog', $(this));});
+	$('#logs-db').click(function(){getLog('/agricoltura/methods/getDbLog', $(this));});
 	
 
-	getLog('/agricoltura/methods/getErrorLog', $('#error-log'));
+	getLog('/agricoltura/methods/getMainLog', $('#logs-main'));
 	getUsers();
 	
-	$('#new-user-confirm').click(function(){
-		$.ajax({ url: '/agricoltura/methods/addUser', 
-			type: 'POST',
-			contentType: 'application/json', 
-			data: JSON.stringify({ 
-				username: $("#new-user-username").val(), 
-				password: $("#new-user-password").val(),
-				is_admin: $("#new-user-check").is(":checked"), 
-			}),
-			success: function(response) {
-				if(response['result']) { 
-					$('#users-result').attr('class', 'text-monospace text-success');
-					$('#users-result').text('OK');
-					getUsers(); 
-				} else {
-					$('#users-result').attr('class', 'text-monospace text-danger');
-					$('#users-result').text('ERROR');
-				}
-				close_modal()
-			},
-			error: function(response) {
-				$('#users-result').attr('class', 'text-monospace text-danger');
-				$('#users-result').text('ERROR');
-				close_modal()
-			}
-		});	
-	});
-
-
-
-	$('#del-user').click(function(){
-		if($('#table-users>tbody>tr.checked-table-row').length) {
-			$.ajax({ url: '/agricoltura/methods/deleteUser', 
+	$('#users-add').click(function(){
+		var pwd = $("#users-pwd").val();
+		if (pwd===$("#users-pwd-confirm").val()) {
+			$.ajax({ url: '/agricoltura/methods/addUser', 
 				type: 'POST',
 				contentType: 'application/json', 
 				data: JSON.stringify({ 
-					username: $('#table-users>tbody>tr.checked-table-row>.usr').html()
+					username: $("#users-username").val(), 
+					password: pwd,
+					is_admin: $("#users-admin").is(":checked"), 
 				}),
 				success: function(response) {
 					if(response['result']) { 
@@ -55,24 +27,53 @@ $(document).ready(function(){
 						$('#users-result').attr('class', 'text-monospace text-danger');
 						$('#users-result').text('ERROR');
 					}
-					close_modal()
 				},
 				error: function(response) {
 					$('#users-result').attr('class', 'text-monospace text-danger');
 					$('#users-result').text('ERROR');
-					close_modal()
+				}
+			});
+		} else {
+			$('#users-result').attr('class', 'text-monospace text-danger');
+			$('#users-result').text("Passwords don't match");
+		}
+	});
+
+
+
+	$('#users-delete').click(function(){
+		if($('#users-table>tbody>tr.checked-table-row').length) {
+			$.ajax({ url: '/agricoltura/methods/deleteUser', 
+				type: 'POST',
+				contentType: 'application/json', 
+				data: JSON.stringify({ 
+					username: $('#users-table>tbody>tr.checked-table-row>.usr').html()
+				}),
+				success: function(response) {
+					if(response['result']) { 
+						$('#users-result').attr('class', 'text-monospace text-success');
+						$('#users-result').text('OK');
+						getUsers(); 
+					} else {
+						$('#users-result').attr('class', 'text-monospace text-danger');
+						$('#users-result').text('ERROR');
+					}
+				},
+				error: function(response) {
+					$('#users-result').attr('class', 'text-monospace text-danger');
+					$('#users-result').text('ERROR');
 				}
 			});
 		}
 	});
 
-	$('#new-api-key').click(function(){
-		if($('#table-users>tbody>tr.checked-table-row').length) {
+	$('#users-new-api').click(function(){
+		if($('#users-table>tbody>tr.checked-table-row').length) {
 			$.ajax({ url: '/agricoltura/methods/regenerateApiKey', 
 				type: 'POST',
 				contentType: 'application/json', 
 				data: JSON.stringify({ 
-					username: $('#table-users>tbody>tr.checked-table-row>.usr').html()
+					username: $('#users-table>tbody>tr.checked-table-row>.usr').html()
 				}),
 				success: function(response) {
 					if(response['result']) { 
@@ -83,12 +84,10 @@ $(document).ready(function(){
 						$('#users-result').attr('class', 'text-monospace text-danger');
 						$('#users-result').text('ERROR');
 					}
-					close_modal()
 				},
 				error: function(response) {
 					$('#users-result').attr('class', 'text-monospace text-danger');
 					$('#users-result').text('ERROR');
-					close_modal()
 				}
 			});
 		}
@@ -96,9 +95,9 @@ $(document).ready(function(){
 
 	function getLog(where, what) {
 		$.get(where, function(data){
-			$('#current-log').text(data);
-			$('#log-btns>.my-btn-active').toggleClass('my-btn-active');
-			what.toggleClass('my-btn-active');			
+			$('#logs-textarea').text(data);
+			$('#logs-bottom>.blue-button-active').toggleClass('blue-button-active');
+			what.toggleClass('blue-button-active');			
 		});
 	}
 	
@@ -116,10 +115,10 @@ $(document).ready(function(){
 				content += '</tr>';
 			});
 			
-			$('#table-users tbody').html(content);
+			$('#users-table tbody').html(content);
 			
-			$('#table-users tbody tr').click(function(){
-				$('#table-users>tbody>tr').removeClass('checked-table-row');
+			$('#users-table tbody tr').click(function(){
+				$('#users-table>tbody>tr').removeClass('checked-table-row');
 				$(this).toggleClass('checked-table-row');
 				
 			});			

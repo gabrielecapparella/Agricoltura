@@ -8,6 +8,22 @@ import threading
 import sensors_utils
 import os
 
+class AlwaysOn:
+	def __init__(self, name, model, wattage, **kwargs):
+		self.name = name
+		self.model_type = model.split("__")[0]
+		self.wattage = wattage
+		self.start_time = sensors_utils.unix_now()
+
+	def get_state(self):
+		uptime = sensors_utils.unix_now()-self.start_time
+		uptime /= (3600*1000) # hours
+		kwh = self.wattage*uptime/1000
+		return [uptime, kwh, 0]
+
+	def set_state(self, target):
+		return False
+
 class Switch:
 	def __init__(self, name, model, power_pin, wattage, **kwargs):
 		self.name = name
@@ -198,15 +214,13 @@ class DHT22:
 		self.last_reading = reading
 		return self.last_reading
 
-class IP_Camera:
+class IP_Camera(AlwaysOn):
 	def __init__(self, name, model, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
-		self.name = name
-		self.model_type = model.split("__")[0]
+		super().__init__(name, model, wattage)
 		self.usr = usr
 		self.pwd = pwd
 		self.ip = ip
 		self.snapshot_dir = snapshot_dir
-		self.wattage = wattage
 		self.interval = interval
 		self.timer = sensors_utils.TimerWrap()
 		self.last_returncode = None
@@ -231,7 +245,7 @@ class IP_Camera:
 		self.timer.reset()
 
 	def get_state(self):
-		return self.timer.remaining()
+		return super().get_state()+[self.timer.remaining()]
 
 	def set_state(self, state):
 		return False

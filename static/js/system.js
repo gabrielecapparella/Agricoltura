@@ -20,21 +20,25 @@ $(document).ready(function(){
 				}),
 				success: function(response) {
 					if(response['result']) { 
-						$('#users-result').attr('class', 'text-monospace text-success');
+						$('#users-result').addClass('green');
 						$('#users-result').text('OK');
-						getUsers(); 
+						getUsers();
+						$("#users-username").val("");
+						$("#users-pwd").val("");
+						$("#users-pwd-confirm").val("");
+						$( "#users-admin" ).prop( "checked", false );
 					} else {
-						$('#users-result').attr('class', 'text-monospace text-danger');
+						$('#users-result').addClass('red');
 						$('#users-result').text('ERROR');
 					}
 				},
 				error: function(response) {
-					$('#users-result').attr('class', 'text-monospace text-danger');
+					$('#users-result').addClass('red');
 					$('#users-result').text('ERROR');
 				}
 			});
 		} else {
-			$('#users-result').attr('class', 'text-monospace text-danger');
+			$('#users-result').addClass('red');
 			$('#users-result').text("Passwords don't match");
 		}
 	});
@@ -51,16 +55,16 @@ $(document).ready(function(){
 				}),
 				success: function(response) {
 					if(response['result']) { 
-						$('#users-result').attr('class', 'text-monospace text-success');
+						$('#users-result').addClass('green');
 						$('#users-result').text('OK');
 						getUsers(); 
 					} else {
-						$('#users-result').attr('class', 'text-monospace text-danger');
+						$('#users-result').addClass('red');
 						$('#users-result').text('ERROR');
 					}
 				},
 				error: function(response) {
-					$('#users-result').attr('class', 'text-monospace text-danger');
+					$('#users-result').addClass('red');
 					$('#users-result').text('ERROR');
 				}
 			});
@@ -77,16 +81,16 @@ $(document).ready(function(){
 				}),
 				success: function(response) {
 					if(response['result']) { 
-						$('#users-result').attr('class', 'text-monospace text-success');
+						$('#users-result').addClass('green');
 						$('#users-result').text('OK');
 						getUsers(); 
 					} else {
-						$('#users-result').attr('class', 'text-monospace text-danger');
+						$('#users-result').addClass('red');
 						$('#users-result').text('ERROR');
 					}
 				},
 				error: function(response) {
-					$('#users-result').attr('class', 'text-monospace text-danger');
+					$('#users-result').addClass('red');
 					$('#users-result').text('ERROR');
 				}
 			});

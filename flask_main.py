@@ -49,10 +49,6 @@ def clean_up():
 
 	global master
 	master.logger.debug('[flask_main]: cleanup')
-	now = sensors_utils.unix_now()
-	uptime = (now-master.boot_time)/(3600*1000) # hours
-	kwh = master.sensors.rates['server_w']*uptime/1000
-	master.db.insert_device_record(('server', 'server', master.boot_time, now, kwh, 0, kwh*master.sensors.rates['elec_price']))
 
 	master.db.clean_up()
 	if master.cfg['homebridge']: master.homebridge.send_signal(signal.SIGINT)

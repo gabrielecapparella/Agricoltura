@@ -1,5 +1,11 @@
 [
     {
+        "model": "always_on__server",
+        "name": "RaspberryPi_3B+",
+        "enabled": true,
+        "wattage": 2.5
+    },
+    {
         "wet_voltage": 3400,
         "name": "moist_1",
         "adc_gain": 1,

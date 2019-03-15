@@ -79,6 +79,11 @@ input {
 }
 
 #users-table-container {
-	width: 300px;
 	margin: 10px;
+}
+
+#users-table-bottom {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
 }

@@ -166,30 +166,30 @@ def sys_status():
 
 	return status
 
-@hardware_methods.route('/shutdown') #flask
-def shutdown_server():
-	if session['is_admin']:
-		current_app.clean_up()
-	else:
-		abort(403)
+# @hardware_methods.route('/shutdown') #flask
+# def shutdown_server():
+# 	if session['is_admin']:
+# 		current_app.clean_up()
+# 	else:
+# 		abort(403)
 
-@hardware_methods.route('/poweroff') #rpi
-def poweroff():
-	if isAdmin():
-		current_app.clean_up()
-		os.system('/usr/bin/sudo /sbin/poweroff')
-		return 'ok'
-	else:
-		abort(403)
+# @hardware_methods.route('/poweroff') #rpi
+# def poweroff():
+# 	if isAdmin():
+# 		current_app.clean_up()
+# 		os.system('/usr/bin/sudo /sbin/poweroff')
+# 		return 'ok'
+# 	else:
+# 		abort(403)
 
-@hardware_methods.route('/reboot')
-def reboot():
-	if isAdmin():
-		current_app.clean_up()
-		os.system('/usr/bin/sudo /sbin/reboot')
-		return 'ok'
-	else:
-		abort(403)
+# @hardware_methods.route('/reboot')
+# def reboot():
+# 	if isAdmin():
+# 		current_app.clean_up()
+# 		os.system('/usr/bin/sudo /sbin/reboot')
+# 		return 'ok'
+# 	else:
+# 		abort(403)
 
 @hardware_methods.route('/waterCycle') #for testing
 def do_water_cycle():

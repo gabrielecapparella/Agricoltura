@@ -45,11 +45,11 @@ $(document).ready(function(){
 				max_soil_moist: $("#max-moist").val()
 			}),
 			success: function(response) {
-				$('#set-param-result').attr('class', 'text-monospace text-success');
+				$('#set-param-result').addClass('green');
 				$('#set-param-result').text('OK');
 			},
 			error: function(response) {
-				$('#set-param-result').attr('class', 'text-monospace text-danger');
+				$('#set-param-result').addClass('red');
 				$('#set-param-result').text('ERROR');
 			},
 			complete: function(response) {

@@ -51,6 +51,8 @@ def get_costs():
 		d_to = data['to']
 
 		costs_data = current_app.db.get_costs(d_from, d_to)
+		#for current_cost in current_app.sensors.get_always_on_costs():
+
 
 		if not d_from: d_from = current_app.db.get_first_day()
 		else: d_from/=1000
@@ -60,7 +62,7 @@ def get_costs():
 		if total_days<1: total_days = 1
 
 		costs = []
-		for entry in costs_data:
+		for entry in costs_data: # entry = [model_type, kwh, l, cost]
 			dev = [None]*4
 			dev[0] = entry[0]
 			if entry[2]>0:

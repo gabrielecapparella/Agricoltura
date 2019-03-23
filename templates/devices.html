@@ -167,12 +167,15 @@
 				<div id="dev-raw-config">
 					<textarea>
 					</textarea>
-					<div id="edit-dev-cfg" class="blue-button">Save</div>
-					<p id="edit-cfg-result" class="form-result"></p>
+					<div id="dev-config-bottom">
+						<div id="edit-dev-cfg" class="blue-button">Save</div>
+						<p id="edit-cfg-result" class="form-result"></p>
+					</div>
 				</div>
 			</div>
 		</section>
 
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/devices.css') }}">
 		<script type="text/javascript" src="{{ url_for('static', filename='js/devices.js') }}"></script>
 		
 {% endblock %}

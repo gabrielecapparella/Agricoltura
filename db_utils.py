@@ -98,13 +98,13 @@ class DB_Connection:
 		query = "SELECT model_type, SUM(kwh), SUM(l), SUM(cost) FROM costs"
 
 		if (date_from) and (date_to):
-			return self.select(query+" WHERE start BETWEEN %s AND %s", (date_from, date_to))
+			return self.select(query+" WHERE start BETWEEN %s AND %s GROUP BY model_type", (date_from, date_to))
 		elif date_from:
-			return self.select(query+" WHERE start >= %s", (date_from,))
+			return self.select(query+" WHERE start >= %s GROUP BY model_type", (date_from,))
 		elif date_to:
-			return self.select(query+" WHERE end <= %s", (date_to,))
+			return self.select(query+" WHERE end <= %s GROUP BY model_type", (date_to,))
 		else:
-			return self.select(query)
+			return self.select(query+" GROUP BY model_type")
 
 	def get_first_day(self):
 		query = "SELECT start FROM costs ORDER BY start LIMIT 1"

@@ -37,7 +37,7 @@ class Sensors:
 				'irrigation': [],
 				'heating': [],
 				'grow_lights': [],
-				'always_on': []
+				'system': []
 			}
 
 			self.g_lights_schedule = []
@@ -68,7 +68,7 @@ class Sensors:
 		self.logger.info("Cleaning up...")
 
 		# add cameras and passive devices costs
-		for cost in self.get_always_on_costs():
+		for cost in self.get_system_costs():
 			self.db.insert_device_record(cost)
 
 		self.set_act(self.devices.keys(), False)
@@ -81,14 +81,14 @@ class Sensors:
 		self.logger.removeHandler(self.log_handler)
 		self.state = False
 
-	def get_always_on_costs(self):
+	def get_system_costs(self):
 		costs = []
 		now = sensors_utils.unix_now()
-		for device_name in self.enabled_devs['cameras']+self.enabled_devs['always_on']:
+		for device_name in self.enabled_devs['cameras']+self.enabled_devs['system']:
 			dev = self.devices[device_name]
 			dev_state = dev.get_state()
 			dev_cost = dev_state[1]*self.rates["elec_price"]+dev_state[2]*self.rates["water_price"]
-			#[name, type, start, end, kwh, l, cost]
+			# dev line: [name, type, start, end, kwh, l, cost]
 			dev_line = (dev.name, dev.model_type, dev.start_time, now, dev_state[1], dev_state[2], dev_cost)
 			costs.append(dev_line)
 		return costs
@@ -374,8 +374,8 @@ class Sensors:
 			elif dev['model'] == 'grow_lights__simple_switch':
 				self.devices[dev['name']] =	devs.GrowLight(**dev)
 
-			elif dev['model'] == 'always_on__server':
-				self.devices[dev['name']] =	devs.AlwaysOn(**dev)
+			elif dev['model'] == 'system':
+				self.devices[dev['name']] =	devs.Passive(**dev)
 
 			else:
 				raise ValueError("Model {} not supported. Perhaps you made a typo?".format(dev['model']))

@@ -179,12 +179,15 @@ $(document).ready(function(){
 			dataType: 'json',
 			success: function(response) {		
 				var content = '';
-				$.each(response, function(index, model_type){
+				$.each(response, function(model_type, data){
+					quantity = data[0]+'KWh'
+					if(data[1]>0) { quantity += ', '+data[1]+'l'}
+
 					content += '<tr>';
-					content += '<td>'+model_type[0]+'</td>'; 
-					content += '<td>'+model_type[1]+'</td>';
-					content += '<td>'+model_type[2]+'</td>';
-					content += '<td>'+model_type[3]+'</td>';
+					content += '<td>'+model_type+'</td>'; 
+					content += '<td>'+quantity+'</td>';
+					content += '<td>'+data[2]+'</td>';
+					content += '<td>'+data[3]+'</td>';
 					content += '</tr>';			
 				});
 				$('#costs-table tbody').html(content);

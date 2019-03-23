@@ -8,7 +8,7 @@ import threading
 import sensors_utils
 import os
 
-class AlwaysOn:
+class Passive:
 	def __init__(self, name, model, wattage, **kwargs):
 		self.name = name
 		self.model_type = model.split("__")[0]
@@ -214,7 +214,7 @@ class DHT22:
 		self.last_reading = reading
 		return self.last_reading
 
-class IP_Camera(AlwaysOn):
+class IP_Camera(Passive):
 	def __init__(self, name, model, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
 		super().__init__(name, model, wattage)
 		self.usr = usr

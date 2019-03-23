@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from flask import current_app, Blueprint, jsonify, abort, request, session
-import time
 import json
 from dateutil import tz
 
@@ -49,32 +48,33 @@ def get_costs():
 		data = request.get_json(force=True)
 		d_from = data['from']
 		d_to = data['to']
-
-		costs_data = current_app.db.get_costs(d_from, d_to)
-		#for current_cost in current_app.sensors.get_always_on_costs():
-
-
 		if not d_from: d_from = current_app.db.get_first_day()
-		else: d_from/=1000
-		if not d_to: d_to = current_app.db.unix_now()/1000
-		else: d_to/=1000
+		if not d_to: d_to = current_app.db.unix_now()
 		total_days = (d_to-d_from)/86400
 		if total_days<1: total_days = 1
 
-		costs = []
-		for entry in costs_data: # entry = [model_type, kwh, l, cost]
-			dev = [None]*4
-			dev[0] = entry[0]
-			if entry[2]>0:
-				dev[1] = "{:.3f} kwh, {:.3f} l".format(entry[1], entry[2])
-			else:
-				dev[1] = "{}kwh".format(entry[1])
-			dev[2] = "{:.3f} €".format(entry[3]/total_days)
-			dev[3] = "{:.3f} €".format(entry[3])
+		costs = {}
+		past_costs = current_app.db.get_costs(d_from, d_to)
+		for entry in past_costs: # entry = [model_type, kwh, l, cost]
+			model_type = [None]*4
+			model_type[0] = entry[1] # kwh
+			model_type[1] = entry[2] # l
+			model_type[2] = round(entry[3]/total_days, 4) # daily avg
+			model_type[3] = entry[3] # total
+			costs[entry[0]] = model_type
 
-			costs.append(dev)
+		# I expect very few 'current costs'
+		current_costs = current_app.sensors.get_system_costs()
+		for entry in current_costs: # entry = [name, model_type, start, end, kwh, l, cost]
+			model_type = costs.get(entry[1], [0]*4)
+			model_type[0] += round(entry[4], 4) # kwh
+			model_type[1] += round(entry[5], 4) # l
+			model_type[3] += round(entry[6], 4) # total
+			model_type[2] = round(model_type[3]/total_days, 4) # daily avg
 
-		return json.dumps(costs)
+			costs[entry[1]] = model_type
+
+		return json.dumps(costs) # costs: {type:[kwh, l, daily avg, tot]}
 	else:
  		abort(403)
 

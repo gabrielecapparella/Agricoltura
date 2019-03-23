@@ -1,7 +1,7 @@
 [
     {
-        "model": "always_on__server",
-        "name": "RaspberryPi_3B+",
+        "model": "system",
+        "name": "duckling-pi",
         "enabled": true,
         "wattage": 2.5
     },

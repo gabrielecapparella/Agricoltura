@@ -154,10 +154,12 @@ section {
 
 .green {
 	color: DarkGreen;
+	display: block !important;
 }
 
 .red {
 	color: DarkRed;
+	display: block !important;
 }
 
 .card-act-switch {

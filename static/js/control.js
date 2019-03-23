@@ -32,6 +32,8 @@ $(document).ready(function(){
 
 	fill_costs_table();
 
+	getRates()
+
 	$('#update-params').click(function(){
 		$.ajax({ url: '/agricoltura/methods/setParameters',
 			type: 'POST',
@@ -93,6 +95,28 @@ $(document).ready(function(){
 		$("#light-interval").val("");
 		$("#light-enabled").val("");	
 	});
+
+	$('#form-costs-bottom').click(function(){
+		$.ajax({ url: '/agricoltura/methods/setRates',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				elec_price: $("#elec-price").val(),
+				water_price: $("#water-price").val()
+			}),
+			success: function(response) {
+				$('#costs-result').addClass('green');
+				$('#costs-result').text('OK');
+			},
+			error: function(response) {
+				$('#costs-result').addClass('red');
+				$('#costs-result').text('ERROR');
+			},
+			complete: function(response) {
+				getRates();
+			}
+		});
+	});	
 
 	$('#costs-ok').click(fill_costs_table);
 
@@ -256,6 +280,13 @@ $(document).ready(function(){
 		}	
 	}
 
+	function getRates() {
+		$.getJSON('/agricoltura/methods/getRates', function(data){
+			$('#elec-price').val(data['elec_price']);
+			$('#water-price').val(data['water_price']);
+		});
+	}	
+
 	// $('#sensors-export').click(function(){
 	// 	$.ajax({ url: '/agricoltura/methods/getReadings',
 	// 		type: 'POST',
@@ -294,18 +325,6 @@ $(document).ready(function(){
 	// 	document.body.appendChild(element);
 	// 	element.click();
 	// 	document.body.removeChild(element);
-	// }
-
-	// function getRates() {
-	// 	$.getJSON('/agricoltura/methods/getRates', function(data){
-	// 		$('#elec-price').val(data['elec_price']);
-	// 		$('#water-price').val(data['water_price']);
-	// 		$('#fan-w').val(data['fan_w']);
-	// 		$('#pump-w').val(data['pump_w']);
-	// 		$('#pump-f').val(data['pump_f']);
-	// 		$('#light-w').val(data['light_w']);
-	// 		$('#server-w').val(data['server_w']);
-	// 	});
 	// }
 
 });

@@ -15,9 +15,9 @@ import smbus
 
 
 class Sensors:
-	def __init__(self):
+	def __init__(self, debug=True):
 		try:
-			self.loggerSetup()
+			self.loggerSetup(debug)
 			self.db = db_utils.DB_Connection()
 
 			self.state = [True, False, False, False, None]	#read,fan,heat,light,water. What is currently on
@@ -55,13 +55,14 @@ class Sensors:
 			self.logger.exception(traceback.format_exc())
 			self.clean_up()
 
-	def loggerSetup(self):
+	def loggerSetup(self, debug = True):
 		self.logger = logging.getLogger(__name__)
 		self.log_handler = RotatingFileHandler('static/log/sensors.log', maxBytes=1024*1024, backupCount=10)
 		formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 		self.log_handler.setFormatter(formatter)
 		self.logger.addHandler(self.log_handler)
-		self.logger.setLevel(logging.DEBUG)
+		if debug: self.logger.setLevel(logging.DEBUG)
+		else: self.logger.setLevel(logging.INFO)
 
 	def clean_up(self):
 		if not self.state: return

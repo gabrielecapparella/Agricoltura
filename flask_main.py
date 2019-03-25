@@ -22,13 +22,17 @@ def setup():
 	global master, sigint_handler, sigterm_handler
 
 	master.config['TEMPLATES_AUTO_RELOAD'] = True
+
 	with open('static/config/main_app.json', 'r') as cfg_file:
 		master.cfg = json.loads(cfg_file.read())
+
 	master.secret_key = master.cfg["session_key"]
-	loggingSetup()
-	master.logger.debug('[flask_main]: setup')
+
+	loggingSetup(master.cfg["debug"])
+	master.logger.info('[flask_main]: setup')
+
 	master.boot_time = sensors_utils.unix_now()
-	master.sensors = sensors.Sensors()
+	master.sensors = sensors.Sensors(debug=master.cfg["debug"])
 	master.db = db_utils.DB_Connection()
 	master.clean_up = clean_up
 
@@ -48,7 +52,7 @@ def clean_up():
 	signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 	global master
-	master.logger.debug('[flask_main]: cleanup')
+	master.logger.info('[flask_main]: cleanup')
 
 	master.db.clean_up()
 	if master.cfg['homebridge']: master.homebridge.send_signal(signal.SIGINT)

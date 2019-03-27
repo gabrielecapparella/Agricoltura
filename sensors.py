@@ -15,8 +15,9 @@ import smbus
 
 
 class Sensors:
-	def __init__(self, debug=True):
+	def __init__(self, debug=True, testing=False, devices_cfg=None, thresholds_cfg=None, rates_cfg=None, light_cfg=None):
 		try:
+			self.testing = testing # if true, files will be left untouched
 			self.loggerSetup(debug)
 			self.db = db_utils.DB_Connection()
 
@@ -45,10 +46,10 @@ class Sensors:
 			with open('static/config/deltas.json', 'r') as delta_file:
 				self.dev_deltas = json.loads(delta_file.read())
 
-			self.parse_devices()
-			self.update_thresholds()
-			self.update_rates()
-			self.update_lights_schedule()
+			self.parse_devices(devices_cfg)
+			self.update_thresholds(thresholds_cfg)
+			self.update_rates(rates_cfg)
+			self.update_lights_schedule(light_cfg)
 			self.start()
 
 		except Exception as e:
@@ -56,8 +57,11 @@ class Sensors:
 			self.clean_up()
 
 	def loggerSetup(self, debug = True):
+		if self.testing: log_file_name = 'static/log/sensors_test.log'
+		else: log_file_name = 'static/log/sensors.log'
+
 		self.logger = logging.getLogger(__name__)
-		self.log_handler = RotatingFileHandler('static/log/sensors.log', maxBytes=1024*1024, backupCount=10)
+		self.log_handler = RotatingFileHandler(log_file_name, maxBytes=1024*1024, backupCount=10)
 		formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 		self.log_handler.setFormatter(formatter)
 		self.logger.addHandler(self.log_handler)
@@ -119,7 +123,7 @@ class Sensors:
 		except Exception as e:
 			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, traceback.format_exc()))
 
-	def get_dev_state(self, who): #who can be an object or a list of objects
+	def get_dev_state(self, who): #"who" can be an object or a list of objects
 		try:
 			if isinstance(who, list):
 				act_state = {}
@@ -162,6 +166,7 @@ class Sensors:
 			self.g_light_schedule.append([job[0], when, job[2], interval, job[4]])
 
 	def write_lights_schedule(self):
+		if self.testing: return
 		with open('static/config/grow_lights_schedule.json', 'w') as lights_file:
 			schedule = []
 			for job in self.g_light_schedule:
@@ -170,6 +175,8 @@ class Sensors:
 				schedule.append([job[0], when, job[2], interval, job[4]])
 			lights_file.write(json.dumps(schedule, indent=4))
 
+	# if duration < 0 then duration = user_chosen_hours_of_light - today_length
+	# if interval < 0 then the rule is one-time-only
 	def check_lights_schedule(self, who=[]):
 		if not who: who = self.enabled_devs['grow_lights']
 		now = sensors_utils.get_now()
@@ -186,7 +193,7 @@ class Sensors:
 						dev.on_for_x_min(job[1]*60)
 						kwh = job[2]*dev.wattage/(3600*1000)
 						cost = kwh*self.rates["elec_price"]
-						self.db.insert_device_record((name, dev.model_type, now, now+job[2]*1000, kwh, 0, cost)) #sistemare quel *1000
+						self.db.insert_device_record((name, dev.model_type, now, now+job[2]*1000, kwh, 0, cost))
 					if job[3]>0: job[1]+=job[3] #interval
 			self.write_lights_schedule()
 		except Exception as e:
@@ -325,13 +332,15 @@ class Sensors:
 
 		#irrigation
 		if self.active_control[3]:
-			ws = self.irrigation.get_state() #WAT
+			#self.state[4]: list of devices watering right now
 			if readings[3]<self.thresholds['min_soil_moist'] and not self.state[4]:
 				self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
-				self.set_act(self.enabled_devs['irrigation'], 'water_cycle')
+				for dev in self.enabled_devs['irrigation']: dev.water_cycle(self.water_cycle_callback)
 				self.state[4] = self.enabled_devs['irrigation']
-			elif readings[3]>self.thresholds['max_soil_moist']:
-				self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {}), watering_state: {}".format(readings[3], self.thresholds['max_soil_moist'], ws[2]))
+			elif readings[3]>self.thresholds['max_soil_moist'] and self.state[4]:
+				self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {})".format(readings[3], self.thresholds['max_soil_moist']))
+				# Here I used self.enabled_devs instead of self.state[4]
+				# because the dev to be shut off may have been turned on by the user
 				self.set_act(self.enabled_devs['irrigation'], False)
 
 	def delete_device(self, name, cfg):

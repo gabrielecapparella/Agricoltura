@@ -28,7 +28,7 @@ def setup():
 
 	master.secret_key = master.cfg["session_key"]
 
-	loggingSetup(master.cfg["debug"])
+	loggingSetup()#master.cfg["debug"])
 	master.logger.info('[flask_main]: setup')
 
 	master.boot_time = sensors_utils.unix_now()

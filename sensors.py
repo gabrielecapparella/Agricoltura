@@ -106,6 +106,12 @@ class Sensors:
 	def get_state(self):
 		return self.state
 
+	def get_active_control(self):
+		return self.active_control
+
+	def set_single_active_control(self, state_index, state):
+		self.active_control[state_index] = state
+
 	def set_act(self, who: list, *state):
 		try:
 			for name in who:

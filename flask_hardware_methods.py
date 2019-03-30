@@ -16,13 +16,25 @@ def get_full_state():
 	return json.dumps(state)
 
 @hardware_methods.route('/setActuator', methods = ['POST'])
-def setActuator():
+def set_actuator():
 	if isAuthorized():
 		data = request.get_json(force=True)
 		current_app.sensors.set_act([data['name']], *data['target_state'])
 		new_state = current_app.sensors.get_dev_state(data['name'])
 		if not isinstance(new_state, list): new_state = [new_state]
 		return json.dumps(new_state)
+	else:
+		abort(403)
+
+@hardware_methods.route('/setActiveControl', methods = ['POST'])
+def set_active_control():
+	if isAuthorized():
+		data = request.get_json(force=True)
+		if data['state_index'] >=0 and data['state_index']<=4 and isinstance(data['state'], bool):
+			current_app.sensors.set_single_active_control(data['state_index'], data['state'])
+			result = True
+		else: result = False
+		return json.dumps({"result":result, "state_index":data['state_index']})
 	else:
 		abort(403)
 

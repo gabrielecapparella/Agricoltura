@@ -9,6 +9,31 @@ $(document).ready(function(){
 		fill_dev_table();
 	});
 
+	$('.card-act-switch').click(function(){
+		$.ajax({ url: '/agricoltura/methods/setActiveControl', 
+			type: 'POST',
+			contentType: 'application/json',
+			dataType: 'json',
+			data: JSON.stringify({ 
+				state_index: parseInt($(this).attr('data-state-index')),
+				state: $(this).attr('data-value')=='True'
+			}),
+			success: function(response) {
+				var act_switch = $('.card-act-switch[data-state-index="'+response['state_index']+'"]')
+				if(response["result"]) {
+					act_switch.attr("class", "green card-act-switch");
+					act_switch.attr("data-value", 'False');
+					act_switch.html("AUTO");
+				} else {
+					act_switch.attr("class", "red card-act-switch");
+					act_switch.attr("data-value", 'True');
+					act_switch.html("MAN");
+
+				}
+			}
+		});		
+	});
+
 	$('.zero, .one, .two').click(function(){
 		var toggle = $(this).parent();
 		switch($(this).attr('data-target')) {
@@ -27,13 +52,13 @@ $(document).ready(function(){
 		}
 		$.ajax({ url: '/agricoltura/methods/setActuator', 
 			type: 'POST',
-			contentType: 'application/json', 
+			contentType: 'application/json',
+			dataType: 'json',
 			data: JSON.stringify({ 
 				name: $(this).parent().parent().attr('id'),
 				target_state: target
 			}),
 			success: function(response) {
-				response = JSON.parse(response)
 				if(!response[0]) {
 					toggle.attr("class", "toggle-button");
 				} else if(response.length==2 && response[1]>50) {
@@ -42,7 +67,7 @@ $(document).ready(function(){
 					toggle.attr("class", "toggle-button-on");
 				}
 			}
-		});		
+		});	
 	});
 
 	$('#edit-dev-cfg').click(function(){

@@ -1,6 +1,13 @@
 {% extends "layout.html" %}
 {% block main %}
 {% include 'navbar.html' %}
+{% macro gen_switch(id, state_index) -%}
+	{% set value = devs['active_control'][state_index] %}
+					<div id="{{ id }}" class="{% if value %}green{% else %}red{% endif %} card-act-switch" data-state-index="{{ state_index }}" data-value="{{ not value }}">
+						{% if value %}AUTO{% else %}MAN{% endif %}
+					</div>
+{%- endmacro %}
+
 		<section id="dev-cards">
 			<h1 class="sec-title">Devices</h1>
 			<div class="cards">
@@ -42,14 +49,10 @@
 			</div>
 			<div class="cards">
 				{% if devs['ventilation'] %}
-				<div id="card-fan" class="card">
+				<div id="card-ventilation" class="card">
 					<div class="card-title">Ventilation</div>
-					{% if devs['active_control'][0] %}
-					<div class="green card-act-switch">AUTO</div>
-					{% else %}
-					<div class="red card-act-switch">MAN</div>
-					{% endif %}
-					{% for name, state in devs['ventilation'].items() %}
+					{{- gen_switch("ventilation-switch", 0) }}
+					{%- for name, state in devs['ventilation'].items() %}
 					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
 						{% if not state[0] %}
@@ -70,11 +73,7 @@
 				{% if devs['heating'] %}
 				<div id="card-heating" class="card">
 					<div class="card-title">Heating</div>
-					{% if devs['active_control'][1] %}
-					<div class="green card-act-switch">AUTO</div>
-					{% else %}
-					<div class="red card-act-switch">MAN</div>
-					{% endif %}
+					{{ gen_switch("heating-switch", 1) }}
 					{% for name, state in devs['heating'].items() %}
 					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
@@ -93,11 +92,7 @@
 				{% if devs['grow_lights'] %}
 				<div id="card-glights" class="card">
 					<div class="card-title">Grow Lights</div>
-					{% if devs['active_control'][2] %}
-					<div class="green card-act-switch">AUTO</div>
-					{% else %}
-					<div class="red card-act-switch">MAN</div>
-					{% endif %}
+					{{ gen_switch("light-switch", 2) }}
 					{% for name, state in devs['grow_lights'].items() %}
 					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>
@@ -116,11 +111,7 @@
 				{% if devs['irrigation'] %}
 				<div id="card-water" class="card">
 					<div class="card-title">Irrigation</div>
-					{% if devs['active_control'][3] %}
-					<div class="green card-act-switch">AUTO</div>
-					{% else %}
-					<div class="red card-act-switch">MAN</div>
-					{% endif %}
+					{{ gen_switch("irrigation-switch", 3) }}
 					{% for name, state in devs['irrigation'].items() %}
 					<div id="{{name}}" class="card-item">
 						<div class="card-item-name">{{name}}</div>

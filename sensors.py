@@ -15,14 +15,14 @@ import smbus
 
 
 class Sensors:
-	def __init__(self, debug=True, testing=False, devices_cfg=None, thresholds_cfg=None, rates_cfg=None, light_cfg=None):
+	def __init__(self, debug=True, testing=False, devices_cfg=None, thresholds_cfg=None, rates_cfg=None, light_cfg=None, deltas_cfg=None):
 		try:
-			self.testing = testing # if true, files will be left untouched
+			self.testing = testing # if true, files and db will be left untouched
 			self.loggerSetup(debug)
-			self.db = db_utils.DB_Connection()
+			self.db = db_utils.DB_Connection(testing=self.testing)
 
-			self.state = [True, False, False, False, None]	#read,fan,heat,light,water. What is currently on
-			self.active_control = [False]*4				#fan,heating,light,irrigation. What is to be controlled
+			self.state = [True, False, False, False, None]	#read,ventilation,heat,light,water. What is currently on
+			self.active_control = [False]*4				#ventilation,heating,light,irrigation. What is to be controlled
 			self.last_reading = None
 			self.cycle_timer = sensors_utils.TimerWrap()
 			self.reading_thread = None
@@ -43,14 +43,12 @@ class Sensors:
 
 			self.g_lights_schedule = []
 
-			with open('static/config/deltas.json', 'r') as delta_file:
-				self.dev_deltas = json.loads(delta_file.read())
-
+			self.update_deltas(deltas_cfg)
 			self.parse_devices(devices_cfg)
 			self.update_thresholds(thresholds_cfg)
 			self.update_rates(rates_cfg)
 			self.update_lights_schedule(light_cfg)
-			self.start()
+			if not self.testing: self.start()
 
 		except Exception as e:
 			self.logger.exception(traceback.format_exc())
@@ -99,9 +97,12 @@ class Sensors:
 		return costs
 
 	def set_state(self, new_state):
+		if not isinstance(new_state, list): return False
+
 		if new_state[0] and not self.state[0]: self.start()
 		elif not new_state[0]: self.stop()
 		self.state = new_state
+		return True
 
 	def get_state(self):
 		return self.state
@@ -110,7 +111,13 @@ class Sensors:
 		return self.active_control
 
 	def set_single_active_control(self, state_index, state):
-		self.active_control[state_index] = state
+		try:
+			self.active_control[state_index] = state
+			return True
+		except Exception as e:
+			self.logger.warning("[Sensors.set_single_active_control]: something bad happened, state_index='{}' state='{}'\n\n{}"
+				.format(state_index, state, traceback.format_exc()))
+			return False
 
 	def set_act(self, who: list, *state):
 		try:
@@ -126,8 +133,11 @@ class Sensors:
 					kwh = time*dev.wattage/3600000
 					cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
 					self.db.insert_device_record((dev.name, dev.model_type, active_since, now, kwh, l, cost))
+			return True
 		except Exception as e:
-			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}".format(who, state, traceback.format_exc()))
+			self.logger.warning("[Sensors.set_act]: something bad happened, who='{}' state='{}'\n\n{}"
+				.format(who, state, traceback.format_exc()))
+			return False
 
 	def get_dev_state(self, who): #"who" can be an object or a list of objects
 		try:
@@ -137,7 +147,8 @@ class Sensors:
 					act_state[name] = self.devices[name].get_state()
 			else: act_state = self.devices[who].get_state()
 		except Exception as e:
-			self.logger.warning("[Sensors.get_dev_state]: something bad happened, what='{}' state='{}'\n\n{}".format(who, traceback.format_exc()))
+			self.logger.warning("[Sensors.get_dev_state]: something bad happened, what='{}' state='{}'\n\n{}"
+				.format(who, traceback.format_exc()))
 		finally:
 			return act_state
 
@@ -148,6 +159,12 @@ class Sensors:
 		full_state["active_control"] = self.active_control
 		full_state["averages"] = self.last_reading
 		return full_state
+
+	def update_deltas(self, new_deltas=None):
+		if new_deltas: self.dev_deltas = new_deltas
+		else:
+			with open('static/config/deltas.json', 'r') as delta_file:
+				self.dev_deltas = json.loads(delta_file.read())
 
 	def update_thresholds(self, new_th = None):
 		if new_th: self.thresholds = new_th
@@ -244,110 +261,123 @@ class Sensors:
 			self.clean_up()
 
 	def read_sensors_callback(self, results):
-		self.logger.debug("[Sensors.read_sensors_callback]: results={}".format(results))
-		if (results["moist"]["max"]-results["moist"]["min"])>self.dev_deltas["moist_max_delta"]:
-			self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(results["moist"]["min"], results["moist"]["max"]))
-		if (results["temp"]["max"]-results["temp"]["min"])>self.dev_deltas["max_temp_delta"]:
-			self.logger.warning("[Sensors.read_sensors]: Temp readings differ too much (min:{}, max:{})".format(results["temp"]["min"], results["temp"]["max"]))
-		if (results["hum"]["max"]-results["hum"]["min"])>self.dev_deltas["max_hum_delta"]:
-			self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(results["hum"]["min"], results["hum"]["max"]))
+		try:
+			self.logger.debug("[Sensors.read_sensors_callback]: results={}".format(results))
+			if (results["moist"]["max"]-results["moist"]["min"])>self.dev_deltas["moist_max_delta"]:
+				self.logger.warning("[Sensors.read_sensors]: Moist readings differ too much (min:{}, max:{})".format(results["moist"]["min"], results["moist"]["max"]))
+			if (results["temp"]["max"]-results["temp"]["min"])>self.dev_deltas["max_temp_delta"]:
+				self.logger.warning("[Sensors.read_sensors]: Temp readings differ too much (min:{}, max:{})".format(results["temp"]["min"], results["temp"]["max"]))
+			if (results["hum"]["max"]-results["hum"]["min"])>self.dev_deltas["max_hum_delta"]:
+				self.logger.warning("[Sensors.read_sensors]: Hum readings differ too much (min:{}, max:{})".format(results["hum"]["min"], results["hum"]["max"]))
 
-		readings = [sensors_utils.unix_now()]
-		readings.append(results["temp"]["avg"])
-		readings.append(results["hum"]["avg"])
-		readings.append(results["moist"]["avg"])
+			readings = [sensors_utils.unix_now()]
+			readings.append(results["temp"]["avg"])
+			readings.append(results["hum"]["avg"])
+			readings.append(results["moist"]["avg"])
 
-		self.db.insert_sensors_reading(readings)
-		self.last_reading = readings
+			self.db.insert_sensors_reading(readings)
+			self.last_reading = readings
 
-		self.operate(readings)
-		next_interval = None
-		if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
-		self.restart(next_interval)
+			self.operate(readings)
+			next_interval = None
+			if True in self.state[1:]: next_interval = 1 # check after 1 min instead of standard interval
+			self.restart(next_interval)
+		except Exception as e:
+			self.logger.exception("[Sensors.read_sensors_callback]: {}".format(traceback.format_exc()))
 
 	def read_sensors(self):
-		self.logger.debug("Reading sensors...")
+		try:
+			self.logger.debug("Reading sensors...")
 
-		results = {
-			"moist": {"min": 101,"max": -1,"avg": 0,"good": 0},
-			"temp": {"min": 100,"max": -274,"avg": 0,"good": 0},
-			"hum": {"min": 101,"max": -1,"avg": 0,"good": 0}
-		}
+			results = {
+				"moist": {"min": 101,"max": -1,"avg": 0,"good": 0},
+				"temp": {"min": 100,"max": -274,"avg": 0,"good": 0},
+				"hum": {"min": 101,"max": -1,"avg": 0,"good": 0}
+			}
 
-		for s_name in self.enabled_devs['soil_moist_sensors']:
-			reading = self.devices[s_name].read()
-			if reading is not None:
-				if reading<results["moist"]["min"]: results["moist"]["min"] = reading
-				if reading>results["moist"]["max"]: results["moist"]["max"] = reading
-				results["moist"]["avg"] += reading
-				results["moist"]["good"] += 1
-		if results["moist"]["good"]:
-			results["moist"]["avg"] = round(results["moist"]["avg"]/results["moist"]["good"], 1)
-		else: results["moist"]["avg"] = None
+			for s_name in self.enabled_devs['soil_moist_sensors']:
+				reading = self.devices[s_name].read()
+				if reading is not None:
+					if reading<results["moist"]["min"]: results["moist"]["min"] = reading
+					if reading>results["moist"]["max"]: results["moist"]["max"] = reading
+					results["moist"]["avg"] += reading
+					results["moist"]["good"] += 1
+			if results["moist"]["good"]:
+				results["moist"]["avg"] = round(results["moist"]["avg"]/results["moist"]["good"], 1)
+			else: results["moist"]["avg"] = None
 
-		for s_name in self.enabled_devs['temp_hum_sensors']:
-			reading = self.devices[s_name].read()
-			if reading[0] is not None:
-				if reading[0]<results["temp"]["min"]: results["temp"]["min"] = reading[0]
-				if reading[0]>results["temp"]["max"]: results["temp"]["max"] = reading[0]
-				results["temp"]["avg"]+=reading[0]
-				results["temp"]["good"]+=1
-			if reading[1] is not None:
-				if reading[1]<results["hum"]["min"]: results["hum"]["min"] = reading[1]
-				if reading[1]>results["hum"]["max"]: results["hum"]["max"] = reading[1]
-				results["hum"]["avg"]+=reading[1]
-				results["hum"]["good"]+=1
-		if results["temp"]["good"]: results["temp"]["avg"] = round(results["temp"]["avg"]/results["temp"]["good"], 1)
-		else: results["temp"]["avg"] = None
-		if results["hum"]["good"]: results["hum"]["avg"] = round(results["hum"]["avg"]/results["hum"]["good"], 1)
-		else: results["hum"]["avg"] = None
+			for s_name in self.enabled_devs['temp_hum_sensors']:
+				reading = self.devices[s_name].read()
+				if reading[0] is not None:
+					if reading[0]<results["temp"]["min"]: results["temp"]["min"] = reading[0]
+					if reading[0]>results["temp"]["max"]: results["temp"]["max"] = reading[0]
+					results["temp"]["avg"]+=reading[0]
+					results["temp"]["good"]+=1
+				if reading[1] is not None:
+					if reading[1]<results["hum"]["min"]: results["hum"]["min"] = reading[1]
+					if reading[1]>results["hum"]["max"]: results["hum"]["max"] = reading[1]
+					results["hum"]["avg"]+=reading[1]
+					results["hum"]["good"]+=1
+			if results["temp"]["good"]: results["temp"]["avg"] = round(results["temp"]["avg"]/results["temp"]["good"], 1)
+			else: results["temp"]["avg"] = None
+			if results["hum"]["good"]: results["hum"]["avg"] = round(results["hum"]["avg"]/results["hum"]["good"], 1)
+			else: results["hum"]["avg"] = None
 
-		self.read_sensors_callback(results)
+			self.read_sensors_callback(results)
+		except Exception as e:
+			self.logger.exception("[Sensors.read_sensors]: {}".format(traceback.format_exc()))
 
-	def operate(self, readings): #[dt, temp, hum, moist]
-		#fans
-		if self.active_control[0]:
-			if readings[1]>self.thresholds['max_temp'] and not self.state[1]:
-				self.logger.info("Temperature is too high ({}°C), turning on the fans".format(readings[1]))
-				self.set_act(self.enabled_devs['fans'], True, 100)
-				self.set_act(self.enabled_devs['heating'], False)
-				self.state[1] = True
-			elif readings[2]>self.thresholds['max_hum'] and not self.state[1]:
-				self.logger.info("Humidity is too high ({}%), turning on the fans".format(readings[2]))
-				self.set_act(self.enabled_devs['fans'], True, 50)
-				self.state[1] = True
-			elif self.state[1]:
-				self.logger.info("Turning off the fans, no need for them anymore")
-				self.set_act(self.enabled_devs['fans'], False)
-				self.state[1] = False
+	def operate(self, readings): # [dt, temp, hum, moist]
+		try:
+			#ventilation
+			if self.active_control[0]:
+				if readings[1]>self.thresholds['max_temp'] and not self.state[1]:
+					self.logger.info("Temperature is too high ({}°C), turning on the ventilation"
+						.format(readings[1]))
+					self.set_act(self.enabled_devs['ventilation'], True, 100)
+					self.set_act(self.enabled_devs['heating'], False)
+					self.state[1] = True
+				elif readings[2]>self.thresholds['max_hum'] and not self.state[1]:
+					self.logger.info("Humidity is too high ({}%), turning on the ventilation".
+						format(readings[2]))
+					self.set_act(self.enabled_devs['ventilation'], True, 50)
+					self.state[1] = True
+				elif readings[1]<=self.thresholds['max_temp'] and readings[2]<=self.thresholds['max_hum'] and self.state[1]:
+					self.logger.info("Turning off the ventilation, no need for them anymore")
+					self.set_act(self.enabled_devs['ventilation'], False)
+					self.state[1] = False
 
-		#heating
-		if self.active_control[1]:
-			if readings[1]<self.thresholds['min_temp'] and not self.state[2]:
-				self.logger.info("Temperature is too low ({}°C), turning on the heating".format(readings[1]))
-				self.set_act(self.enabled_devs['heating'], True)
-				self.state[2] = True
-			elif self.state[2]:
-				self.logger.info("Turning off the heating, no need for it anymore")
-				self.set_act(self.enabled_devs['heating'], False)
-				self.state[2] = False
 
-		#grow_lights
-		self.check_lights_schedule(self.enabled_devs['grow_lights'])
-		self.write_lights_schedule()
+			#heating
+			if self.active_control[1]:
+				if readings[1]<self.thresholds['min_temp'] and not self.state[2]:
+					self.logger.info("Temperature is too low ({}°C), turning on the heating".format(readings[1]))
+					self.set_act(self.enabled_devs['heating'], True)
+					self.state[2] = True
+				elif readings[1]>=self.thresholds['min_temp'] and self.state[2]:
+					self.logger.info("Turning off the heating, no need for it anymore")
+					self.set_act(self.enabled_devs['heating'], False)
+					self.state[2] = False
 
-		#irrigation
-		if self.active_control[3]:
-			#self.state[4]: list of devices watering right now
-			if readings[3]<self.thresholds['min_soil_moist'] and not self.state[4]:
-				self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
-				for dev in self.enabled_devs['irrigation']: dev.water_cycle(self.water_cycle_callback)
-				self.state[4] = self.enabled_devs['irrigation']
-			elif readings[3]>self.thresholds['max_soil_moist'] and self.state[4]:
-				self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {})".format(readings[3], self.thresholds['max_soil_moist']))
-				# Here I used self.enabled_devs instead of self.state[4]
-				# because the dev to be shut off may have been turned on by the user
-				self.set_act(self.enabled_devs['irrigation'], False)
+			#grow_lights
+			self.check_lights_schedule(self.enabled_devs['grow_lights'])
+			self.write_lights_schedule()
+
+			#irrigation
+			if self.active_control[3]:
+				#self.state[4]: list of devices watering right now
+				if readings[3]<self.thresholds['min_soil_moist'] and not self.state[4]:
+					self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
+					for dev in self.enabled_devs['irrigation']: dev.water_cycle(self.water_cycle_callback)
+					self.state[4] = self.enabled_devs['irrigation']
+				elif readings[3]>self.thresholds['max_soil_moist'] and self.state[4]:
+					self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {})".format(readings[3], self.thresholds['max_soil_moist']))
+					# Here I used self.enabled_devs instead of self.state[4]
+					# because the dev to be shut off may have been turned on by the user
+					self.set_act(self.enabled_devs['irrigation'], False)
+
+		except Exception as e:
+			self.logger.exception("[Sensors.operate]: {}".format(traceback.format_exc()))
 
 	def delete_device(self, name, cfg):
 		try:

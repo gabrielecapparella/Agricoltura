@@ -8,15 +8,8 @@ from datetime import datetime as dt
 #python3 -m unittest -v db_utils_test.py
 class db_utils_test(unittest.TestCase):
 
-	__cfg = {
-		'usr': 'gabriele',
-		'pwd': '31415', #pi
-		'db': 'greenhouse_test',
-	}
-
 	def setUp(self):
-		db_utils.setup(self.__cfg['usr'], self.__cfg['pwd'], self.__cfg['db'])
-		self.db = db_utils.DB_Connection(self.__cfg['db'], testing=True)
+		self.db = db_utils.DB_Connection(testing=True)
 
 	def tearDown(self):
 		self.db.clean_up()

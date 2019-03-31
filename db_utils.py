@@ -11,18 +11,24 @@ import json
 from logging.handlers import RotatingFileHandler
 
 class DB_Connection:
-	def __init__(self, db='greenhouse', testing=False):
+	def __init__(self, testing=False, cfg=None): #if testing, a testing db will be used and deleted on clean_up
+		self.testing = testing
 		self.logger = logging.getLogger(__name__)
 		self.log_handler = None
-		if not len(self.logger.handlers):
-			self.loggerSetup('static/log/db_utils.log', testing)
-
+		if not len(self.logger.handlers): self.loggerSetup()
 		self.logger.info("[DB_utils]: Initiating...")
 
-		with open('static/config/database.json', 'r') as cfg_file:
-			self.__config = json.loads(cfg_file.read())
+		if cfg:
+			self.__config = cfg
+		else:
+			with open('static/config/database.json', 'r') as cfg_file:
+				self.__config = json.loads(cfg_file.read())
 
-		self.__config['database'] = db
+		if testing:
+			self.__config['database'] += '_test'
+			setup_db(**self.__config)
+
+		self.__config['autocommit'] = True
 		self.pool = self.create_pool(pool_name="db_utils_pool", pool_size=10)
 
 	def create_pool(self, pool_name, pool_size):
@@ -45,13 +51,15 @@ class DB_Connection:
 
 	def clean_up(self):
 		self.logger.info("[DB_utils]: cleaning up...")
+		if self.testing: self.insert("DROP DATABASE IF EXIST {}".format(self.__config['database']), "")
 		self.pool._remove_connections()
 		if self.log_handler:
 			self.log_handler.close()
 			self.logger.removeHandler(self.log_handler)
 
-	def loggerSetup(self, log_file, testing):
-		if testing: log_file = 'db_utils_test.log'
+	def loggerSetup(self):
+		if self.testing: log_file = 'static/log/db_utils_test.log'
+		else: log_file = 'static/log/db_utils.log'
 
 		self.log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=10)
 		formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
@@ -234,7 +242,7 @@ class DB_Connection:
 def datetime2unix(dt):
 	return int(time.mktime(dt.timetuple())*1000)
 
-def setup(usr, pwd, db):
+def setup_db(user, password, database):
 	admin_pwd = 'raspberry314'
 
 	table_sensors = (
@@ -277,12 +285,12 @@ def setup(usr, pwd, db):
 		") ENGINE=InnoDB")
 
 	try:
-		connection = mysql.connector.connect(user=usr, password=pwd)
+		connection = mysql.connector.connect(user=user, password=password)
 		cursor = connection.cursor()
 
-		cursor.execute("DROP DATABASE IF EXISTS {}".format(db))
-		cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(db))
-		connection.database = db
+		cursor.execute("DROP DATABASE IF EXISTS {}".format(database))
+		cursor.execute("CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(database))
+		connection.database = database
 
 		cursor.execute(table_sensors)
 		cursor.execute(table_costs)

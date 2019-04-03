@@ -139,7 +139,7 @@ class Sensors:
 				.format(who, state, traceback.format_exc()))
 			return False
 
-	def get_dev_state(self, who): #"who" can be an object or a list of objects
+	def get_dev_state(self, who): #"who" can be a string (name) or a list of strings
 		try:
 			if isinstance(who, list):
 				act_state = {}
@@ -225,8 +225,10 @@ class Sensors:
 	def water_cycle_callback(self, dev):
 		try:
 			if dev.name in self.state[4]: self.state[4].remove(dev.name)
+
 			now = sensors_utils.unix_now()
-			kwh, l = dev.water_time*dev.wattage/60000, dev.water_time*dev.flow
+			actual_water_time = now-dev.active_since
+			kwh, l = actual_water_time*dev.wattage/60000, actual_water_time*dev.flow #no water time, should use actual time
 			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
 			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, now, kwh, l, cost))
 		except Exception as e:
@@ -368,7 +370,8 @@ class Sensors:
 				#self.state[4]: list of devices watering right now
 				if readings[3]<self.thresholds['min_soil_moist'] and not self.state[4]:
 					self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
-					for dev in self.enabled_devs['irrigation']: dev.water_cycle(self.water_cycle_callback)
+					for dev_name in self.enabled_devs['irrigation']:
+						self.devices[dev_name].water_cycle(self.water_cycle_callback)
 					self.state[4] = self.enabled_devs['irrigation']
 				elif readings[3]>self.thresholds['max_soil_moist'] and self.state[4]:
 					self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {})".format(readings[3], self.thresholds['max_soil_moist']))
@@ -394,7 +397,7 @@ class Sensors:
 		self.delete_device(old_name, new_cfg)
 		return self.add_device(new_cfg)
 
-	def add_device(self, dev):
+	def add_device(self, dev): # dev is a dict
 		try:
 			if dev['model'] == 'soil_moist_sensors__generic_analog':
 				self.devices[dev['name']] = devs.SoilMoistureSensor(adc=self.adc, **dev)
@@ -438,7 +441,7 @@ class Sensors:
 
 	def parse_devices(self, devs=None):
 		try:
-			if not devs:
+			if devs==None: # tests use empty string
 				with open('static/config/devices.json', 'r') as devs_file:
 					devs = json.loads(devs_file.read())
 

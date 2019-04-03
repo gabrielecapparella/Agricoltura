@@ -65,31 +65,35 @@ class Irrigation(Switch):
 		self.spread_time = cycle_spread_time
 		self.flow = water_flow
 		self.timer = sensors_utils.TimerWrap()
+		self.callback = None
 
 	def get_state(self):
 		return [self.state, self.timer.remaining(), self.watering_state]
 
-	def set_state(self, target=True, w_state=0):
+	def set_state(self, target=True, w_state=-1):
+		if not target and w_state==-1:
+			self.timer.reset()
+			self.watering_state = 0
+			if self.callback: self.callback(self)
+			return super().set_state(False)
+
 		self.watering_state = w_state
-		if target: return super().on()
-		else:
-			if w_state==0: self.timer.reset()
-			return super().off()
+		return super().set_state(target)
+
 
 	def water_cycle(self, callback=None):
 		ws = self.watering_state
 		if ws==0:
-			print("[Irrigation.water_cycle]: water on.")
 			self.set_state(True, 1)
 			self.timer.start(self.water_time*60, self.water_cycle)
+			if callback: self.callback = callback
 		elif ws==1:
-			print("[Irrigation.water_cycle]: water off.")
 			self.set_state(False, 2)
 			self.timer.start(self.spread_time*60, self.water_cycle)	#wait while it spreads
 		elif ws==2:
-			print("[Irrigation.water_cycle]: cycle finished.")
-			self.set_state(False, 0)
-			if callback: callback(self)
+			if self.callback:
+				self.callback(self)
+				self.callback = None
 
 class Fan(Switch):
 	def __init__(self, name, model, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):

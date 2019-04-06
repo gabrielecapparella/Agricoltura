@@ -21,6 +21,8 @@ class Sensors:
 			self.loggerSetup(debug)
 			self.db = db_utils.DB_Connection(testing=self.testing)
 
+			# state[4] is a list because irrigation devices can have different cycle's time
+			# and in each moment I have to know if one is on because of the user or the system
 			self.state = [True, False, False, False, None]	#read,ventilation,heat,light,water. What is currently on
 			self.active_control = [False]*4				#ventilation,heating,light,irrigation. What is to be controlled
 			self.last_reading = None
@@ -179,14 +181,34 @@ class Sensors:
 				self.rates = json.loads(rates_file.read())
 
 	def update_lights_schedule(self, new_schedule = None): #job = [who, when, duration, interval, enabled]
-		if not new_schedule:
+		if new_schedule==None: # tests use empty list, thanks python!
 			with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
 				new_schedule = json.loads(lights_file.read())
-		self.g_light_schedule = []
+		self.g_lights_schedule = []
 		for job in new_schedule:
 			when = datetime.datetime.strptime(job[1], '%Y-%m-%d %H:%M')
 			interval = datetime.timedelta(hours=float(job[3]))
-			self.g_light_schedule.append([job[0], when, job[2], interval, job[4]])
+			self.g_lights_schedule.append([job[0], when, job[2], interval, job[4]])
+
+	# if duration < 0 then duration = user_chosen_hours_of_light - today_length
+	# if interval < 0 then the rule is one-time-only
+	def check_lights_schedule(self):
+		try:
+			now = datetime.datetime.now()
+			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
+				if job[1]<=now and job[4]:
+					if job[2]<0 and self.active_control[2]: #additional hours of light
+						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
+						if to_provide>0: job[2] = to_provide
+						else: continue # avoid deploying lights
+					for name in job[0].split(','):
+						if name in self.enabled_devs['grow_lights']:
+							dev = self.devices[name]
+							dev.on_for_x_min(job[2]*60, self.grow_light_callback)
+					if job[3].seconds>0: job[1]+=job[3] #interval
+			self.write_lights_schedule()
+		except Exception as e:
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened\n\n{}".format(traceback.format_exc()))
 
 	def write_lights_schedule(self):
 		if self.testing: return
@@ -198,41 +220,25 @@ class Sensors:
 				schedule.append([job[0], when, job[2], interval, job[4]])
 			lights_file.write(json.dumps(schedule, indent=4))
 
-	# if duration < 0 then duration = user_chosen_hours_of_light - today_length
-	# if interval < 0 then the rule is one-time-only
-	def check_lights_schedule(self, who=[]):
-		if not who: who = self.enabled_devs['grow_lights']
-		now = sensors_utils.get_now()
-		try:
-			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
-				if job[1]<=now and job[4]:
-					if job[2]<0 and self.active_control[2]: #additional hours of light
-						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
-						if to_provide>0: job[2] = to_provide
-						else: continue
-
-					for name in who.split(','):
-						dev = self.devices[name]
-						dev.on_for_x_min(job[1]*60)
-						kwh = job[2]*dev.wattage/(3600*1000)
-						cost = kwh*self.rates["elec_price"]
-						self.db.insert_device_record((name, dev.model_type, now, now+job[2]*1000, kwh, 0, cost))
-					if job[3]>0: job[1]+=job[3] #interval
-			self.write_lights_schedule()
-		except Exception as e:
-			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened, who='{}'\n\n{}".format(who, traceback.format_exc()))
-
 	def water_cycle_callback(self, dev):
 		try:
 			if dev.name in self.state[4]: self.state[4].remove(dev.name)
-
 			now = sensors_utils.unix_now()
-			actual_water_time = now-dev.active_since
+			actual_water_time = (now-dev.active_since)/(60*1000) # minutes
 			kwh, l = actual_water_time*dev.wattage/60000, actual_water_time*dev.flow #no water time, should use actual time
-			cost = kwh*self.rates["elec_price"]+l*self.rates["water_price"]
+			cost = kwh*self.rates["elec_price"]+l/1000*self.rates["water_price"]
 			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, now, kwh, l, cost))
 		except Exception as e:
 			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
+
+	def grow_light_callback(self, dev):
+		try:
+			unix_now = sensors_utils.unix_now()
+			kwh = (unix_now-dev.active_since)*dev.wattage/(3600*1000)
+			cost = kwh*self.rates["elec_price"]
+			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, unix_now, kwh, 0, cost))
+		except Exception as e:
+			self.logger.warning("[Sensors.grow_light_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
 
 	def start(self):
 		self.logger.info("Initiating...")
@@ -362,7 +368,7 @@ class Sensors:
 					self.state[2] = False
 
 			#grow_lights
-			self.check_lights_schedule(self.enabled_devs['grow_lights'])
+			self.check_lights_schedule()
 			self.write_lights_schedule()
 
 			#irrigation
@@ -397,7 +403,7 @@ class Sensors:
 		self.delete_device(old_name, new_cfg)
 		return self.add_device(new_cfg)
 
-	def add_device(self, dev): # dev is a dict
+	def add_device(self, dev: dict):
 		try:
 			if dev['model'] == 'soil_moist_sensors__generic_analog':
 				self.devices[dev['name']] = devs.SoilMoistureSensor(adc=self.adc, **dev)

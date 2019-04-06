@@ -51,7 +51,7 @@ class DB_Connection:
 
 	def clean_up(self):
 		self.logger.info("[DB_utils]: cleaning up...")
-		if self.testing: self.insert("DROP DATABASE IF EXIST {}".format(self.__config['database']), "")
+		# if self.testing: self.insert("DROP DATABASE IF EXISTS {}".format(self.__config['database']), "")
 		self.pool._remove_connections()
 		if self.log_handler:
 			self.log_handler.close()

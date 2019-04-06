@@ -70,30 +70,31 @@ class Irrigation(Switch):
 	def get_state(self):
 		return [self.state, self.timer.remaining(), self.watering_state]
 
-	def set_state(self, target=True, w_state=-1):
-		if not target and w_state==-1:
+	def set_state(self, target=True):
+		if not target and self.watering_state>0:# caught during water cycle
 			self.timer.reset()
 			self.watering_state = 0
+			super().set_state(False)
 			if self.callback: self.callback(self)
-			return super().set_state(False)
-
-		self.watering_state = w_state
-		return super().set_state(target)
-
+			return -1 # callback already registered it
+		else:
+			return super().set_state(target)
 
 	def water_cycle(self, callback=None):
 		ws = self.watering_state
 		if ws==0:
-			self.set_state(True, 1)
+			self.watering_state = 1
+			self.on()
 			self.timer.start(self.water_time*60, self.water_cycle)
 			if callback: self.callback = callback
 		elif ws==1:
-			self.set_state(False, 2)
+			self.watering_state = 2
+			self.off()
 			self.timer.start(self.spread_time*60, self.water_cycle)	#wait while it spreads
 		elif ws==2:
-			if self.callback:
-				self.callback(self)
-				self.callback = None
+			self.watering_state = 0
+			if self.callback: self.callback(self)
+
 
 class Fan(Switch):
 	def __init__(self, name, model, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):
@@ -138,10 +139,23 @@ class GrowLight(Switch):
 	def __init__(self, name, model, power_pin, wattage, **kwargs):
 		super().__init__(name, model, power_pin, wattage)
 		self.timer = sensors_utils.TimerWrap()
+		self.callback = None
+		self.working = False
 
-	def on_for_x_min(self, minutes):
+	def set_state(self, target=True):
+		if not target and self.working:
+			self.off()
+			self.callback(self)
+			self.working = False
+			return -1
+		else:
+			return super().set_state(target)
+
+	def on_for_x_min(self, minutes, callback=None):
+		self.working = True
 		self.on()
-		self.timer.start(minutes*60, self.off)
+		self.timer.start(minutes*60, self.set_state, [False])
+		if callback: self.callback = callback
 
 class SoilMoistureSensor:
 	def __init__(self, name, adc, adc_channel, wet_voltage, dry_voltage, adc_gain=2/3, **kwargs):

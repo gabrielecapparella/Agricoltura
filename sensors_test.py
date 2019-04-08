@@ -31,12 +31,14 @@ class sensor_test(unittest.TestCase):
 			"water_price": 1.8
 		}
 
-		self.sensors = Sensors(testing=True,
+		self.sensors = Sensors(
+			testing=True,
 			devices_cfg="",
 			thresholds_cfg=self.thresholds,
 			deltas_cfg=self.deltas,
 			rates_cfg=self.rates,
-			light_cfg=[])
+			light_cfg=[]
+		)
 
 	def tearDown(self):
 		self.sensors.clean_up()

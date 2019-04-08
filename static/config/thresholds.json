@@ -4,5 +4,7 @@
     "max_temp": 33.0,
     "max_soil_moist": 60.0,
     "min_temp": 15.0,
-    "max_hum": 30.0
+    "max_hum": 30.0,
+    "min_light_hours": 0.0,
+    "snapshots_interval": 24.0
 }

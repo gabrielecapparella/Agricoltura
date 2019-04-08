@@ -54,7 +54,7 @@ def get_now():
 	dt = dt.replace(tzinfo=from_zone)
 	return dt.astimezone(to_zone)
 
-def unix_now():
+def unix_now(): #milliseconds
 	return int(time.time()*1000)
 
 def get_today_len(self):

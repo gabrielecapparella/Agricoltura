@@ -63,7 +63,7 @@ class Irrigation(Switch):
 		self.watering_state = 0 #0:inactive, 1:watering, 2:propagating
 		self.water_time = cycle_water_time
 		self.spread_time = cycle_spread_time
-		self.flow = water_flow
+		self.flow = water_flow # l/min
 		self.timer = sensors_utils.TimerWrap()
 		self.callback = None
 

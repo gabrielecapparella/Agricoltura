@@ -44,7 +44,9 @@ $(document).ready(function(){
 				max_hum: $("#max-hum").val(),
 				max_temp: $("#max-temp").val(),
 				min_soil_moist: $("#min-moist").val(),
-				max_soil_moist: $("#max-moist").val()
+				max_soil_moist: $("#max-moist").val(),
+				min_light_hours: $("#min-light-hours").val(),
+				snapshots_interval: $("#snap-interval").val(),				
 			}),
 			success: function(response) {
 				$('#set-param-result').addClass('green');
@@ -153,6 +155,8 @@ $(document).ready(function(){
 			$('#max-hum').val(data['max_hum']);
 			$('#min-moist').val(data['min_soil_moist']);
 			$('#max-moist').val(data['max_soil_moist']);
+			$('#min-light-hours').val(data['min_light_hours']);
+			$('#snap-interval').val(data['snapshots_interval']);
 
 			thresholds = data;
 			drawTemperature();

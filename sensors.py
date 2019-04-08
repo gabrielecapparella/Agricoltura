@@ -214,7 +214,7 @@ class Sensors:
 		if self.testing: return
 		with open('static/config/grow_lights_schedule.json', 'w') as lights_file:
 			schedule = []
-			for job in self.g_light_schedule:
+			for job in self.g_lights_schedule:
 				when = job[1].strftime("%Y-%m-%d %H:%M")
 				interval = job[3].total_seconds()/3600
 				schedule.append([job[0], when, job[2], interval, job[4]])

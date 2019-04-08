@@ -7,6 +7,7 @@ import subprocess
 import threading
 import sensors_utils
 import os
+from picamera import PiCamera
 
 class Passive:
 	def __init__(self, name, model, wattage, **kwargs):
@@ -233,19 +234,19 @@ class DHT22:
 		return self.last_reading
 
 class IP_Camera(Passive):
-	def __init__(self, name, model, usr, pwd, ip, snapshot_dir, wattage, interval=-1, **kwargs):
+	def __init__(self, name, model, usr, pwd, ip, snapshots_dir, wattage, interval=-1, **kwargs):
 		super().__init__(name, model, wattage)
 		self.usr = usr
 		self.pwd = pwd
 		self.ip = ip
-		self.snapshot_dir = snapshot_dir
+		self.snapshots_dir = snapshots_dir
 		self.interval = interval
 		self.timer = sensors_utils.TimerWrap()
 		self.last_returncode = None
 
 	def take_snapshot(self):
 		now = sensors_utils.get_now()
-		folder = self.snapshot_dir+now.strftime("%Y-%m-%d")
+		folder = self.snapshots_dir+now.strftime("%Y-%m-%d")
 		filename = folder+now.strftime("%Y-%m-%d_%H-%M-%S")+'_'+self.name+'.jpg'
 		os.makedirs(folder,exist_ok=True)
 
@@ -257,6 +258,33 @@ class IP_Camera(Passive):
 	def call_ffmpeg(self, cmd):
 		sub = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 		self.last_returncode = sub.wait()
+
+	def stop(self):
+		self.interval = -1
+		self.timer.reset()
+
+	def get_state(self):
+		return super().get_state()+[self.timer.remaining()]
+
+	def set_state(self, state):
+		return False
+
+class RPi_Camera(Passive): # should be enabled in raspi-config
+	def __init__(self, name, model, snapshots_dir, rotation, interval=-1, **kwargs):
+		super().__init__(name, model, 0)
+		self.snapshots_dir = snapshots_dir
+		self.interval = interval
+		self.timer = sensors_utils.TimerWrap()
+		self.roration = rotation
+		# PiCamera supports several other parameters
+
+	def take_snapshot(self):
+		# I don't expect frequent snapshots and the camera module uses 250mA
+		with PiCamera() as camera:
+			camera.rotation = self.rotation
+			time.sleep(1) # camera warm-up
+			camera.capture(self.snapshots_dir)
+		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
 
 	def stop(self):
 		self.interval = -1

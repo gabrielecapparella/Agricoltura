@@ -220,6 +220,14 @@ class Sensors:
 				schedule.append([job[0], when, job[2], interval, job[4]])
 			lights_file.write(json.dumps(schedule, indent=4))
 
+	def do_water_cycle(self):
+		try:
+			for dev_name in self.enabled_devs['irrigation']:
+				self.devices[dev_name].water_cycle(self.water_cycle_callback)
+		except Exception as e:
+			self.logger.warning("[Sensors.do_water_cycle]: something bad happened\n\n{}"
+				.format(traceback.format_exc()))
+
 	def water_cycle_callback(self, dev):
 		try:
 			if dev.name in self.state[4]: self.state[4].remove(dev.name)
@@ -229,7 +237,8 @@ class Sensors:
 			cost = kwh*self.rates["elec_price"]+l/1000*self.rates["water_price"]
 			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, now, kwh, l, cost))
 		except Exception as e:
-			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
+			self.logger.warning("[Sensors.water_cycle_callback]: something bad happened, who='{}'\n\n{}"
+				.format(dev.name, traceback.format_exc()))
 
 	def grow_light_callback(self, dev):
 		try:
@@ -376,8 +385,7 @@ class Sensors:
 				#self.state[4]: list of devices watering right now
 				if readings[3]<self.thresholds['min_soil_moist'] and not self.state[4]:
 					self.logger.info("Soil moisture is too low ({}%), turning on the water".format(readings[3]))
-					for dev_name in self.enabled_devs['irrigation']:
-						self.devices[dev_name].water_cycle(self.water_cycle_callback)
+					self.do_water_cycle()
 					self.state[4] = self.enabled_devs['irrigation']
 				elif readings[3]>self.thresholds['max_soil_moist'] and self.state[4]:
 					self.logger.warning("Turning off the water. Soil moisture is {}% (should be under {})".format(readings[3], self.thresholds['max_soil_moist']))

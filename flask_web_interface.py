@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
-from flask import current_app, Blueprint, redirect, url_for, render_template, session, abort, send_file
-from flask_software_methods import isAuthorized, isAdmin
-from flask_hardware_methods import sys_status
-import os
+from flask import current_app, Blueprint, redirect, url_for, render_template, session, abort
+from flask_users import isAuthorized, isAdmin
+from flask_sensors import sys_status
 
 web_interface = Blueprint('web_interface', __name__, template_folder='templates', static_folder="static")
 
@@ -37,13 +36,3 @@ def system():
 	if isAdmin():
 		return render_template('system.html', title="System", status=sys_status())
 	else: abort(403)
-
-@web_interface.route('/snapshot')
-def snapshot():
-	ph = os.listdir('static/photos/')
-	if ph:
-		ph.sort(reverse=True)
-		last = ph[0]
-		return send_file('static/photos/'+last, mimetype='image/jpeg')
-	else:
-		return 'nope'

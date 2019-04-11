@@ -2,8 +2,9 @@
 
 from flask import Flask, render_template, request
 import flask_web_interface
-import flask_software_methods
-import flask_hardware_methods
+import flask_users
+import flask_files
+import flask_sensors
 import db_utils
 import sensors
 import signal
@@ -15,8 +16,9 @@ import sensors_utils
 
 master = Flask(__name__, static_url_path="/agricoltura/static")
 master.register_blueprint(flask_web_interface.web_interface, url_prefix='/agricoltura')
-master.register_blueprint(flask_software_methods.software_methods, url_prefix='/agricoltura/methods')
-master.register_blueprint(flask_hardware_methods.hardware_methods, url_prefix='/agricoltura/methods')
+master.register_blueprint(flask_users.manage_users, url_prefix='/agricoltura/methods')
+master.register_blueprint(flask_files.manage_files, url_prefix='/agricoltura/methods')
+master.register_blueprint(flask_sensors.sensors_api, url_prefix='/agricoltura/methods')
 
 def setup():
 	global master, sigint_handler, sigterm_handler

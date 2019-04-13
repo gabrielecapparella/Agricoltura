@@ -14,12 +14,12 @@ def get_rates():
 def set_rates():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		floaty_dict = {}
-		for k,v in data.items():
-			floaty_dict[k] = float(v)
+		# floaty_dict = {}
+		# for k,v in data.items():
+		# 	floaty_dict[k] = float(v)
 
 		with open('static/config/costs_rates.json', 'w') as file:
-			file.write(js_dumps(floaty_dict, indent=4))
+			file.write(js_dumps(data, indent=4))
 		return 'ok'
 	else:
 		abort(403)
@@ -76,13 +76,13 @@ def edit_device_cfg():
 def set_parameters():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		floaty_dict = {}
-		for k,v in data.items():
-			floaty_dict[k] = float(v)
+		# floaty_dict = {}
+		# for k,v in data.items():
+		# 	floaty_dict[k] = float(v)
 
 		with open('static/config/thresholds.json', 'w') as file:
-			file.write(js_dumps(floaty_dict, indent=4))
-		current_app.sensors.update_thresholds(floaty_dict)
+			file.write(js_dumps(data, indent=4))
+		current_app.sensors.update_thresholds(data)
 		return 'ok'
 	else:
 		abort(403)

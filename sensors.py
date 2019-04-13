@@ -193,19 +193,22 @@ class Sensors:
 	# if duration < 0 then duration = user_chosen_hours_of_light - today_length
 	# if interval < 0 then the rule is one-time-only
 	def check_lights_schedule(self):
+		if not self.active_control[2]: return
 		try:
 			now = datetime.datetime.now()
 			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
 				if job[1]<=now and job[4]:
-					if job[2]<0 and self.active_control[2]: #additional hours of light
+					if job[2]<0: #additional hours of light
 						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
 						if to_provide>0: job[2] = to_provide
 						else: continue # avoid deploying lights
 					for name in job[0].split(','):
 						if name in self.enabled_devs['grow_lights']:
 							dev = self.devices[name]
+							self.logger.info("[Sensors.check_lights_schedule]: turning on {} for {} hours"
+								.format(name, job[2]))
 							dev.on_for_x_min(job[2]*60, self.grow_light_callback)
-					if job[3].seconds>0: job[1]+=job[3] #interval
+					if job[3].total_seconds()>0: job[1]+=job[3]
 			self.write_lights_schedule()
 		except Exception as e:
 			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened\n\n{}".format(traceback.format_exc()))
@@ -230,6 +233,8 @@ class Sensors:
 
 	def water_cycle_callback(self, dev):
 		try:
+			self.logger.warning("[Sensors.water_cycle_callback]: {} just finished"
+				.format(dev.name))
 			if dev.name in self.state[4]: self.state[4].remove(dev.name)
 			now = sensors_utils.unix_now()
 			actual_water_time = (now-dev.active_since)/(60*1000) # minutes
@@ -242,6 +247,8 @@ class Sensors:
 
 	def grow_light_callback(self, dev):
 		try:
+			self.logger.warning("[Sensors.grow_light_callback]: {} just finished"
+				.format(dev.name))
 			unix_now = sensors_utils.unix_now()
 			kwh = (unix_now-dev.active_since)*dev.wattage/(3600*1000)
 			cost = kwh*self.rates["elec_price"]

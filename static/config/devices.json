@@ -1,7 +1,7 @@
 [
     {
         "model": "system",
-        "name": "duckling-pi",
+        "name": "greenhouse-pi",
         "enabled": true,
         "wattage": 2.5
     },
@@ -9,37 +9,51 @@
         "wet_voltage": 3400,
         "name": "moist_1",
         "adc_gain": 1,
-        "enabled": true,
+        "enabled": false,
         "model": "soil_moist_sensors__generic_analog",
-        "adc_channel": 0,
+        "adc_channel": 2,
         "dry_voltage": 26700
     },
     {
         "wet_voltage": 3400,
         "name": "moist_2",
         "adc_gain": 1,
-        "enabled": true,
+        "enabled": false,
         "model": "soil_moist_sensors__generic_analog",
-        "adc_channel": 1,
+        "adc_channel": 3,
         "dry_voltage": 26700
-    },    
+    },
     {
-        "enabled": true,
+        "name": "th_1",
+        "model": "temp_hum_sensors__DHT22",
+        "read_pin": 16,
+        "max_reading_attempts": 3,
+        "enabled": true
+    },
+    {
+        "name": "th_2",
+        "model": "temp_hum_sensors__DHT22",
+        "read_pin": 20,
+        "max_reading_attempts": 3,
+        "enabled": true
+    },
+    {
+        "enabled": false,
         "model": "temp_hum_sensors__SHT31",
         "name": "sht31_1",
         "address": "0x44"
     },
     {
-        "enabled": true,
+        "enabled": false,
         "model": "temp_hum_sensors__SHT31",
         "name": "sht31_2",
         "address": "0x45"
     },
     {
         "name": "arctic_f8_pwm",
-        "power_pin": 20,
+        "power_pin": 19,
         "wattage": 5,
-        "speed_pin": 16,
+        "speed_pin": 21,
         "enabled": true,
         "model": "ventilation__pwm_fan",
         "pwm_frequency": 25000
@@ -51,28 +65,21 @@
         "cycle_spread_time": 10,
         "wattage": 5,
         "model": "irrigation__simple_switch",
-        "enabled": true,
+        "enabled": false,
         "cycle_water_time": 1
     },
     {
         "enabled": true,
         "model": "grow_lights__simple_switch",
-        "power_pin": 21,
-        "wattage": 50,
-        "name": "led_light_50W"
+        "power_pin": 15,
+        "wattage": 13,
+        "name": "led_light_13W"
     },
     {
         "enabled": true,
         "model": "heating__simple_switch",
-        "power_pin": 22,
+        "power_pin": 13,
         "wattage": 150,
         "name": "halogen_light_150W"
-    },
-    {
-        "enabled": true,
-        "model": "heating__simple_switch",
-        "power_pin": 23,
-        "wattage": 200,
-        "name": "halogen_light_200W"
     }
 ]

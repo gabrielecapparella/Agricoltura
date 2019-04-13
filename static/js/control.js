@@ -39,14 +39,14 @@ $(document).ready(function(){
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
-				interval_min: $("#interval-min").val(),
-				min_temp: $("#min-temp").val(),
-				max_hum: $("#max-hum").val(),
-				max_temp: $("#max-temp").val(),
-				min_soil_moist: $("#min-moist").val(),
-				max_soil_moist: $("#max-moist").val(),
-				min_light_hours: $("#min-light-hours").val(),
-				snapshots_interval: $("#snap-interval").val(),				
+				interval_min: parseFloat($("#interval-min").val()),
+				min_temp: parseFloat($("#min-temp").val()),
+				max_hum: parseFloat($("#max-hum").val()),
+				max_temp: parseFloat($("#max-temp").val()),
+				min_soil_moist: parseFloat($("#min-moist").val()),
+				max_soil_moist: parseFloat($("#max-moist").val()),
+				min_light_hours: parseFloat($("#min-light-hours").val()),
+				snapshots_interval: parseFloat($("#snap-interval").val()),				
 			}),
 			success: function(response) {
 				$('#set-param-result').addClass('green');
@@ -68,8 +68,8 @@ $(document).ready(function(){
 		rule = [
 			$("#light-who").val(),
 			$("#light-when").val().replace("T", " "),
-			$("#light-duration").val(),
-			$("#light-interval").val(),
+			parseFloat($("#light-duration").val()),
+			parseFloat($("#light-interval").val()),
 			$("#light-enabled").val()
 		];
 
@@ -103,8 +103,8 @@ $(document).ready(function(){
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify({
-				elec_price: $("#elec-price").val(),
-				water_price: $("#water-price").val()
+				elec_price: parseFloat($("#elec-price").val()),
+				water_price: parseFloat($("#water-price").val())
 			}),
 			success: function(response) {
 				$('#costs-result').addClass('green');

@@ -8,5 +8,6 @@ certs/
 photos/
 database.json
 main_app.json
+devices.json
 env-agricoltura/
 start.sh

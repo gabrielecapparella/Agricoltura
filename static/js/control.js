@@ -70,7 +70,7 @@ $(document).ready(function(){
 			$("#light-when").val().replace("T", " "),
 			parseFloat($("#light-duration").val()),
 			parseFloat($("#light-interval").val()),
-			$("#light-enabled").val()
+			$("#light-enabled").val()=="true"
 		];
 
 		if (sel_rule_index < 0) { // Adding a new rule

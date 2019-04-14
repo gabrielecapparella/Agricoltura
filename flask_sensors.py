@@ -31,8 +31,8 @@ def set_actuator():
 def set_active_control():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		result = current_app.sensors.set_single_active_control(data['state_index'], data['state'])
-		return js_dumps({"result":result, "state_index":data['state_index']})
+		current_app.sensors.set_single_active_control(data['state_index'], data['state'])
+		return js_dumps({"result":data['state'], "state_index":data['state_index']})
 	else:
 		abort(403)
 

@@ -250,7 +250,7 @@ class Sensors:
 			self.logger.warning("[Sensors.grow_light_callback]: {} just finished"
 				.format(dev.name))
 			unix_now = sensors_utils.unix_now()
-			kwh = (unix_now-dev.active_since)*dev.wattage/(3600*1000)
+			kwh = (unix_now-dev.active_since)*dev.wattage/(3600*1000*1000)
 			cost = kwh*self.rates["elec_price"]
 			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, unix_now, kwh, 0, cost))
 		except Exception as e:

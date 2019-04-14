@@ -2,12 +2,8 @@ __pycache__/
 letsencrypt/
 homebridge/
 *.log
-hw_test.py
-simple_flask.py
 certs/
 photos/
-database.json
-main_app.json
-devices.json
-env-agricoltura/
+venv-agricoltura/
 start.sh
+static/config/*.json

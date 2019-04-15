@@ -45,8 +45,8 @@ $(document).ready(function(){
 				max_temp: parseFloat($("#max-temp").val()),
 				min_soil_moist: parseFloat($("#min-moist").val()),
 				max_soil_moist: parseFloat($("#max-moist").val()),
-				min_light_hours: parseFloat($("#min-light-hours").val()),
-				snapshots_interval: parseFloat($("#snap-interval").val()),				
+				min_light_hours: parseFloat($("#min-light-hours").val())
+				// snapshots_interval: parseFloat($("#snap-interval").val()),				
 			}),
 			success: function(response) {
 				$('#set-param-result').addClass('green');
@@ -156,7 +156,7 @@ $(document).ready(function(){
 			$('#min-moist').val(data['min_soil_moist']);
 			$('#max-moist').val(data['max_soil_moist']);
 			$('#min-light-hours').val(data['min_light_hours']);
-			$('#snap-interval').val(data['snapshots_interval']);
+			// $('#snap-interval').val(data['snapshots_interval']);
 
 			thresholds = data;
 			drawTemperature();

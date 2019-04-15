@@ -25,7 +25,7 @@ def setup():
 
 	master.config['TEMPLATES_AUTO_RELOAD'] = True
 
-	with open('static/config/main_app.json', 'r') as cfg_file:
+	with open('config/main_app.json', 'r') as cfg_file:
 		master.cfg = json.loads(cfg_file.read())
 
 	master.secret_key = master.cfg["session_key"]
@@ -39,7 +39,7 @@ def setup():
 	master.clean_up = clean_up
 
 	if master.cfg['homebridge']:
-		with open('static/log/homebridge.log', 'a') as hb_log:
+		with open('log/homebridge.log', 'a') as hb_log:
 			master.homebridge = subprocess.Popen('homebridge', stdout=subprocess.DEVNULL, stderr=hb_log)
 
 	signal.signal(signal.SIGTERM, teardown_handler)
@@ -68,7 +68,7 @@ def loggingSetup():
 
 	log_format = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 
-	master.log_handler = RotatingFileHandler('static/log/main.log', maxBytes=1024*1024, backupCount=10)
+	master.log_handler = RotatingFileHandler('log/main.log', maxBytes=1024*1024, backupCount=10)
 	master.log_handler.setFormatter(log_format)
 	master.log_handler.setLevel(logging.DEBUG)
 

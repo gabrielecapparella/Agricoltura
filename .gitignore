@@ -6,4 +6,4 @@ certs/
 photos/
 venv-agricoltura/
 start.sh
-static/config/*.json
+config/*.json

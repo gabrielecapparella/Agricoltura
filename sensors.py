@@ -57,8 +57,8 @@ class Sensors:
 			self.clean_up()
 
 	def loggerSetup(self, debug = True):
-		if self.testing: log_file_name = 'static/log/sensors_test.log'
-		else: log_file_name = 'static/log/sensors.log'
+		if self.testing: log_file_name = 'log/sensors_test.log'
+		else: log_file_name = 'log/sensors.log'
 
 		self.logger = logging.getLogger(__name__)
 		self.log_handler = RotatingFileHandler(log_file_name, maxBytes=1024*1024, backupCount=10)
@@ -165,24 +165,24 @@ class Sensors:
 	def update_deltas(self, new_deltas=None):
 		if new_deltas: self.dev_deltas = new_deltas
 		else:
-			with open('static/config/deltas.json', 'r') as delta_file:
+			with open('config/deltas.json', 'r') as delta_file:
 				self.dev_deltas = json.loads(delta_file.read())
 
 	def update_thresholds(self, new_th = None):
 		if new_th: self.thresholds = new_th
 		else:
-			with open('static/config/thresholds.json', 'r') as cfg_file:
+			with open('config/thresholds.json', 'r') as cfg_file:
 				self.thresholds = json.loads(cfg_file.read())
 
 	def update_rates(self, new_rates = None):
 		if new_rates: self.rates = new_rates
 		else:
-			with open('static/config/costs_rates.json', 'r') as rates_file:
+			with open('config/costs_rates.json', 'r') as rates_file:
 				self.rates = json.loads(rates_file.read())
 
 	def update_lights_schedule(self, new_schedule = None): #job = [who, when, duration, interval, enabled]
 		if new_schedule==None: # tests use empty list, thanks python!
-			with open('static/config/grow_lights_schedule.json', 'r') as lights_file:
+			with open('config/grow_lights_schedule.json', 'r') as lights_file:
 				new_schedule = json.loads(lights_file.read())
 		self.g_lights_schedule = []
 		for job in new_schedule:
@@ -215,7 +215,7 @@ class Sensors:
 
 	def write_lights_schedule(self):
 		if self.testing: return
-		with open('static/config/grow_lights_schedule.json', 'w') as lights_file:
+		with open('config/grow_lights_schedule.json', 'w') as lights_file:
 			schedule = []
 			for job in self.g_lights_schedule:
 				when = job[1].strftime("%Y-%m-%d %H:%M")
@@ -435,6 +435,9 @@ class Sensors:
 			elif dev['model'] == 'cameras__ip_camera':
 				self.devices[dev['name']] = devs.IP_Camera(**dev)
 
+			elif dev['model'] == 'cameras__rpi_camera':
+				self.devices[dev['name']] = devs.RPi_Camera(**dev)
+
 			elif dev['model'] == 'irrigation__simple_switch':
 				self.devices[dev['name']] = devs.Irrigation(**dev)
 
@@ -463,7 +466,7 @@ class Sensors:
 	def parse_devices(self, devs=None):
 		try:
 			if devs==None: # tests use empty string
-				with open('static/config/devices.json', 'r') as devs_file:
+				with open('config/devices.json', 'r') as devs_file:
 					devs = json.loads(devs_file.read())
 
 			for device in devs:

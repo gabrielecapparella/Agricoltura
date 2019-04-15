@@ -9,6 +9,24 @@ $(document).ready(function(){
 		fill_dev_table();
 	});
 
+	get_snapshots();
+
+	function get_snapshots() {
+		$(".snapshot").each(function() {
+			$.ajax({ url: '/agricoltura/methods/getLastSnapshot', 
+				type: 'POST',
+				contentType: 'application/json',
+				// dataType: 'json',
+				data: JSON.stringify({ 
+					camera_name: $(this).attr('data-camera-name')
+				}),
+				success: function(response) {
+					$(".snapshot").attr("src", "data:image/jpeg;base64," + response);
+				}
+			});			
+		});
+	}	
+
 	$('.card-act-switch').click(function(){
 		$.ajax({ url: '/agricoltura/methods/setActiveControl', 
 			type: 'POST',

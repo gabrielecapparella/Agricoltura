@@ -247,7 +247,7 @@ class IP_Camera(Passive):
 	def take_snapshot(self):
 		now = sensors_utils.get_now()
 		folder = self.snapshots_dir+now.strftime("%Y-%m-%d")
-		filename = folder+now.strftime("%Y-%m-%d_%H-%M-%S")+'_'+self.name+'.jpg'
+		filename = os.path.join(folder, now.strftime("%Y-%m-%d_%H-%M-%S")+'_'+self.name+'.jpg')
 		os.makedirs(folder,exist_ok=True)
 
 		cmd = 'ffmpeg -y -rtsp_transport tcp -i "rtsp://'+self.usr+':'+self.pwd+'@'+self.ip+'/11" -frames 1 '+filename
@@ -273,17 +273,20 @@ class RPi_Camera(Passive): # should be enabled in raspi-config
 	def __init__(self, name, model, snapshots_dir, rotation, interval=-1, **kwargs):
 		super().__init__(name, model, 0)
 		self.snapshots_dir = snapshots_dir
-		self.interval = interval
+		self.interval = interval*3600
 		self.timer = sensors_utils.TimerWrap()
-		self.roration = rotation
+		self.rotation = rotation
 		# PiCamera supports several other parameters
 
 	def take_snapshot(self):
 		# I don't expect frequent snapshots and the camera module uses 250mA
+		# so I turn it on and off each time as the doc says
 		with PiCamera() as camera:
 			camera.rotation = self.rotation
 			time.sleep(1) # camera warm-up
-			camera.capture(self.snapshots_dir)
+			timestamp = sensors_utils.get_now().strftime("%Y-%m-%d_%H-%M-%S")
+			filename = os.path.join(self.snapshots_dir, timestamp+'_'+self.name+'.jpg')
+			camera.capture(filename)
 		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
 
 	def stop(self):

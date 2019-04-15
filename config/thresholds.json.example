@@ -1,10 +1,10 @@
 {
     "min_temp": 18,
-    "max_soil_moist": 100,
-    "max_hum": 100,
+    "max_soil_moist": 90,
+    "max_hum": 90,
     "snapshots_interval": 24,
-    "min_soil_moist": 0,
-    "max_temp": 25,
+    "min_soil_moist": 10,
+    "max_temp": 30,
     "min_light_hours": 0,
     "interval_min": 5
 }

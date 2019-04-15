@@ -21,7 +21,7 @@ class DB_Connection:
 		if cfg:
 			self.__config = cfg
 		else:
-			with open('static/config/database.json', 'r') as cfg_file:
+			with open('config/database.json', 'r') as cfg_file:
 				self.__config = json.loads(cfg_file.read())
 
 		if testing:
@@ -58,8 +58,8 @@ class DB_Connection:
 			self.logger.removeHandler(self.log_handler)
 
 	def loggerSetup(self):
-		if self.testing: log_file = 'static/log/db_utils_test.log'
-		else: log_file = 'static/log/db_utils.log'
+		if self.testing: log_file = 'log/db_utils_test.log'
+		else: log_file = 'log/db_utils.log'
 
 		self.log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=10)
 		formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')

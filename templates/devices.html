@@ -133,7 +133,9 @@
 				{% for name in devs['cameras'] %}
 				<div class="card">
 					<div class="card-title">{{name}}</div>
-					<div class="card-cam-snapshot"></div>
+					<div class="card-cam-snapshot">
+						<img src="" class="snapshot" data-camera-name="{{name}}" alt="Camera Snapshot">
+					</div>
 				</div>
 				{% endfor %}		
 			</div>

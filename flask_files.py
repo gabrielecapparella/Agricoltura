@@ -110,10 +110,10 @@ def set_light_schedule():
 	else:
 		abort(403)
 
-@manage_files.route('/getLastSnapshot', methods = ['POST'])
+@manage_files.route('/getLastSnapshot', methods = ['GET'])
 def snapshot():
 	if isAuthorized():
-		name = request.get_json(force=True)["camera_name"]
+		name = request.args.get("camera_name")
 		snap_dir = current_app.sensors.devices[name].snapshots_dir
 		ph = os.listdir(snap_dir)
 		if ph:

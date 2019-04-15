@@ -28,9 +28,14 @@
 }
 
 .card-cam-snapshot {
-	width: 650px;
-	height: 400px;
 	border: 1px solid black;
+}
+
+
+.snapshot {
+	max-width:100%;
+	height:auto;
+	vertical-align: top;
 }
 
 .toggle-button, .toggle-button-on, .toggle-button-two {

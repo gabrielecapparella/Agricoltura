@@ -13,6 +13,7 @@ import json
 from logging.handlers import RotatingFileHandler
 import subprocess
 import sensors_utils
+from os import urandom
 
 master = Flask(__name__, static_url_path="/agricoltura/static")
 master.register_blueprint(flask_web_interface.web_interface, url_prefix='/agricoltura')
@@ -28,7 +29,7 @@ def setup():
 	with open('config/main_app.json', 'r') as cfg_file:
 		master.cfg = json.loads(cfg_file.read())
 
-	master.secret_key = master.cfg["session_key"]
+	master.secret_key = urandom(42)
 
 	loggingSetup()#master.cfg["debug"])
 	master.logger.info('[flask_main]: setup')

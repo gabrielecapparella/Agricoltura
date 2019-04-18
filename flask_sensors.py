@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
-from flask import current_app, Blueprint, abort, request, send_file
+from flask import current_app, Blueprint, abort, request
 from datetime import timedelta
 from flask_users import isAuthorized, isAdmin
 from flask_files import fread
 from re import search
 from json import dumps as js_dumps
-from os import statvfs, listdir
-from os.path import join
+from os import statvfs
+import traceback
 
 sensors_api = Blueprint('sensors_api', __name__)
 
@@ -20,7 +20,8 @@ def get_full_state():
 def set_actuator():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		current_app.sensors.set_act([data['name']], *data['target_state'])
+		set_act = current_app.sensors.set_act([data['name']], *data['target_state'])
+		if not set_act: abort(422)
 		new_state = current_app.sensors.get_dev_state(data['name'])
 		if not isinstance(new_state, list): new_state = [new_state]
 		return js_dumps(new_state)
@@ -31,53 +32,50 @@ def set_actuator():
 def set_active_control():
 	if isAuthorized():
 		data = request.get_json(force=True)
-		current_app.sensors.set_single_active_control(data['state_index'], data['state'])
+		set_sac = current_app.sensors.set_single_active_control(data['state_index'], data['state'])
+		if not set_sac: abort(422)
 		return js_dumps({"result":data['state'], "state_index":data['state_index']})
-	else:
-		abort(403)
-
-@sensors_api.route('/setSensorsState', methods = ['POST'])
-def set_sensors_state():
-	if isAuthorized():
-		state = request.get_json(force=True)
-		current_app.sensors.set_state(state)
-		return 'ok'
 	else:
 		abort(403)
 
 @sensors_api.route('/getCosts', methods = ['POST'])
 def get_costs():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		d_from = data['from']
-		d_to = data['to']
-		if not d_from: d_from = current_app.db.get_first_day()
-		if not d_to: d_to = current_app.db.unix_now()
-		total_days = (d_to-d_from)/86400
-		if total_days<1: total_days = 1
+		try:
+			data = request.get_json(force=True)
+			d_from = data['from']
+			d_to = data['to']
+			if not d_from: d_from = current_app.db.get_first_day()
+			if not d_to: d_to = current_app.db.unix_now()
+			total_days = (d_to-d_from)/86400
+			if total_days<1: total_days = 1
 
-		costs = {}
-		past_costs = current_app.db.get_costs(d_from, d_to)
-		for entry in past_costs: # entry = [model_type, kwh, l, cost]
-			model_type = [None]*4
-			model_type[0] = entry[1] # kwh
-			model_type[1] = entry[2] # l
-			model_type[2] = round(entry[3]/total_days, 4) # daily avg
-			model_type[3] = entry[3] # total
-			costs[entry[0]] = model_type
+			costs = {}
+			past_costs = current_app.db.get_costs(d_from, d_to)
+			for entry in past_costs: # entry = [model_type, kwh, l, cost]
+				model_type = [None]*4
+				model_type[0] = entry[1] # kwh
+				model_type[1] = entry[2] # l
+				model_type[2] = round(entry[3]/total_days, 4) # daily avg
+				model_type[3] = entry[3] # total
+				costs[entry[0]] = model_type
 
-		# I expect very few 'current costs'
-		current_costs = current_app.sensors.get_system_costs()
-		for entry in current_costs: # entry = [name, model_type, start, end, kwh, l, cost]
-			model_type = costs.get(entry[1], [0]*4)
-			model_type[0] += round(entry[4], 4) # kwh
-			model_type[1] += round(entry[5], 4) # l
-			model_type[3] += round(entry[6], 4) # total
-			model_type[2] = round(model_type[3]/total_days, 4) # daily avg
+			# I expect very few 'current costs'
+			current_costs = current_app.sensors.get_system_costs()
+			for entry in current_costs: # entry = [name, model_type, start, end, kwh, l, cost]
+				model_type = costs.get(entry[1], [0]*4)
+				model_type[0] += round(entry[4], 4) # kwh
+				model_type[1] += round(entry[5], 4) # l
+				model_type[3] += round(entry[6], 4) # total
+				model_type[2] = round(model_type[3]/total_days, 4) # daily avg
 
-			costs[entry[1]] = model_type
+				costs[entry[1]] = model_type
 
-		return js_dumps(costs) # costs: {type:[kwh, l, daily avg, tot]}
+			return js_dumps(costs) # costs: {type:[kwh, l, daily avg, tot]}
+		except Exception as e:
+			current_app.logger.exception("[/methods/getCosts]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
  		abort(403)
 
@@ -96,35 +94,34 @@ def get_moist_history():
 @sensors_api.route('/getReadings', methods = ['POST'])
 def export_readings():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		d_from = data['from']
-		d_to = data['to']
-		return js_dumps(current_app.db.get_readings(d_from, d_to))
+		try:
+			data = request.get_json(force=True)
+			d_from = data['from']
+			d_to = data['to']
+			results = current_app.db.get_readings(d_from, d_to)
+			return js_dumps(results)
+		except Exception as e:
+			current_app.logger.exception("[/methods/getReadings]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 
 @sensors_api.route('/getActuators', methods = ['POST'])
 def export_actuators():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		d_from = data['from']
-		d_to = data['to']
-		return js_dumps(current_app.db.get_actuators_records(d_from, d_to))
+		try:
+			data = request.get_json(force=True)
+			d_from = data['from']
+			d_to = data['to']
+			results = current_app.db.get_actuators_records(d_from, d_to)
+			return js_dumps(results)
+		except Exception as e:
+			current_app.logger.exception("[/methods/getActuators]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
-
-@sensors_api.route('/getLastSnapshot', methods = ['POST']) # TODO
-def get_last_snapshot():
-	camera_name = request.get_json(force=True)["camera_name"]
-	camera = current_app.sensors.devices.get(camera_name, None)
-	if not camera: return 'camera not found'
-	ph = listdir(camera.snapshots_dir)
-	if ph:
-		ph.sort(reverse=True)
-		full_path = join(camera.snapshots_dir, ph[0])
-		return send_file(full_path, mimetype='image/jpeg')
-	else:
-		return 'snapshots dir not found'
 
 @sensors_api.route('/getSystemStatus')
 def get_system_status():

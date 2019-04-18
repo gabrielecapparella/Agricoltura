@@ -17,36 +17,7 @@ $(document).ready(function(){
 			selected: 0
 		},
 		series: [{name: 'Temperature', tooltip: {valueDecimals: 1, valueSuffix: '°C'}}],
-		responsive: {
-			rules: [{
-				condition: {
-					maxWidth: 680
-				}//,
-				// chartOptions: {
-				// 	legend: {
-				// 		align: 'center',
-				// 		verticalAlign: 'bottom',
-				// 		layout: 'horizontal'
-				// 	},
-				// 	yAxis: {
-				// 		labels: {
-				// 			align: 'left',
-				// 			x: 0,
-				// 			y: -5
-				// 		},
-				// 		title: {
-				// 			text: null
-				// 		}
-				// 	},
-				// 	subtitle: {
-				// 		text: null
-				// 	},
-				// 	credits: {
-				// 		enabled: false
-				// 	}
-				// }
-			}]
-		}	
+		time: {	timezone: 'Europe/Rome'	}
 	});
 
 	$('#temp-chart').click(drawTemperature);

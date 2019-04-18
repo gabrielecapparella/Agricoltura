@@ -16,7 +16,37 @@ $(document).ready(function(){
 			],
 			selected: 0
 		},
-		series: [{name: 'Temperature', tooltip: {valueDecimals: 1, valueSuffix: '°C'}}]
+		series: [{name: 'Temperature', tooltip: {valueDecimals: 1, valueSuffix: '°C'}}],
+		responsive: {
+			rules: [{
+				condition: {
+					maxWidth: 680
+				}//,
+				// chartOptions: {
+				// 	legend: {
+				// 		align: 'center',
+				// 		verticalAlign: 'bottom',
+				// 		layout: 'horizontal'
+				// 	},
+				// 	yAxis: {
+				// 		labels: {
+				// 			align: 'left',
+				// 			x: 0,
+				// 			y: -5
+				// 		},
+				// 		title: {
+				// 			text: null
+				// 		}
+				// 	},
+				// 	subtitle: {
+				// 		text: null
+				// 	},
+				// 	credits: {
+				// 		enabled: false
+				// 	}
+				// }
+			}]
+		}	
 	});
 
 	$('#temp-chart').click(drawTemperature);
@@ -35,6 +65,9 @@ $(document).ready(function(){
 	getRates()
 
 	$('#update-params').click(function(){
+		if(parseFloat($("#min-temp").val())==180) {
+			alert("Statico o ventilato?");
+		}
 		$.ajax({ url: '/agricoltura/methods/setParameters',
 			type: 'POST',
 			contentType: 'application/json',
@@ -45,8 +78,7 @@ $(document).ready(function(){
 				max_temp: parseFloat($("#max-temp").val()),
 				min_soil_moist: parseFloat($("#min-moist").val()),
 				max_soil_moist: parseFloat($("#max-moist").val()),
-				min_light_hours: parseFloat($("#min-light-hours").val())
-				// snapshots_interval: parseFloat($("#snap-interval").val()),				
+				min_light_hours: parseFloat($("#min-light-hours").val())			
 			}),
 			success: function(response) {
 				$('#set-param-result').addClass('green');
@@ -208,14 +240,14 @@ $(document).ready(function(){
 			success: function(response) {		
 				var content = '';
 				$.each(response, function(model_type, data){
-					quantity = data[0]+'KWh'
-					if(data[1]>0) { quantity += ', '+data[1]+'l'}
+					quantity = data[0]+' KWh'
+					if(data[1]>0) { quantity += ', '+data[1]+' l'}
 
 					content += '<tr>';
 					content += '<td>'+model_type+'</td>'; 
 					content += '<td>'+quantity+'</td>';
-					content += '<td>'+data[2]+'</td>';
-					content += '<td>'+data[3]+'</td>';
+					content += '<td>'+data[2]+' €</td>';
+					content += '<td>'+data[3]+' €</td>';
 					content += '</tr>';			
 				});
 				$('#costs-table tbody').html(content);

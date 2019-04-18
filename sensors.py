@@ -197,21 +197,31 @@ class Sensors:
 		try:
 			now = datetime.datetime.now()
 			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
-				if job[1]<=now and job[4]:
-					if job[2]<0: #additional hours of light
+				diff = (now-job[1]).total_seconds()
+				if diff>=0 and job[4]:
+					# compute how many h are to be provided
+					if job[2]<0: # additional hours of light
 						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
-						if to_provide>0: job[2] = to_provide
-						else: continue # avoid deploying lights
-					for name in job[0].split(','):
-						if name in self.enabled_devs['grow_lights']:
-							dev = self.devices[name]
-							self.logger.info("[Sensors.check_lights_schedule]: turning on {} for {} hours"
-								.format(name, job[2]))
-							dev.on_for_x_min(job[2]*60, self.grow_light_callback)
-					if job[3].total_seconds()>0: job[1]+=job[3]
+					else: # static rule
+						to_provide = job[2]
+
+					# account for time elapsed between "when" and now
+					diff = (diff//900)*0.25 # normalized to 15min clicks
+					to_provide -= diff
+
+					# if necessary, deploy lights
+					if to_provide>0:
+						for name in job[0].split(','):
+							if name in self.enabled_devs['grow_lights']:
+								dev = self.devices[name]
+								self.logger.info("[Sensors.check_lights_schedule]: turning on {} for {} hours"
+									.format(name, job[2]))
+								dev.on_for_x_min(job[2]*60, self.grow_light_callback)
+						if job[3].total_seconds()>0: job[1]+=job[3]
 			self.write_lights_schedule()
 		except Exception as e:
-			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened\n\n{}".format(traceback.format_exc()))
+			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened\n\n{}"
+				.format(traceback.format_exc()))
 
 	def write_lights_schedule(self):
 		if self.testing: return
@@ -254,7 +264,8 @@ class Sensors:
 			cost = kwh*self.rates["elec_price"]
 			self.db.insert_device_record((dev.name, dev.model_type, dev.active_since, unix_now, kwh, 0, cost))
 		except Exception as e:
-			self.logger.warning("[Sensors.grow_light_callback]: something bad happened, who='{}'\n\n{}".format(dev.name, traceback.format_exc()))
+			self.logger.warning("[Sensors.grow_light_callback]: something bad happened, who='{}'\n\n{}"
+				.format(dev.name, traceback.format_exc()))
 
 	def start(self):
 		self.logger.info("Initiating...")

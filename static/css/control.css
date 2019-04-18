@@ -81,12 +81,14 @@ select {
 
 #history-chart {
 	border:1px solid black;
-	width: 620px;
+/*	width: 620px;*/
 	margin: 10px auto;
 	display: flex;
-/*	flex-direction: column;*/
 	justify-content: center;
 	flex-wrap: wrap;
+/*	max-width: 700px;
+	max-height: 350px;*/
+	flex-direction: column;
 }
 
 #history-chart > .blue-button {
@@ -100,10 +102,22 @@ select {
 	height: 300px;
 }
 
+@media only screen and (max-width: 650px) {
+	.chart {
+		width: 350px;
+		height: 250px;
+	}
+}
+
+#chart-footer {
+	display: flex;
+	justify-content: center;
+}
+
 #form-costs {
 	border:1px solid black;
 	width: 250px;
-/*	height: 170px;*/
+	max-height: 130px;
 	margin: 10px;
 	display: flex;
 	flex-direction: column;

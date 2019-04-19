@@ -22,8 +22,10 @@ def logout():
 
 @web_interface.route('/devices')
 def devices():
-	full_state = current_app.sensors.get_full_state()
-	return render_template('devices.html', title="Devices", devs=full_state)
+	if isAuthorized():
+		full_state = current_app.sensors.get_full_state()
+		return render_template('devices.html', title="Devices", devs=full_state)
+	else: abort(403)
 
 @web_interface.route('/control')
 def control():

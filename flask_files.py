@@ -4,6 +4,7 @@ from flask import current_app, Blueprint, abort, request, send_file
 from flask_users import isAuthorized, isAdmin
 from json import dumps as js_dumps, loads as js_loads
 import os
+import traceback
 
 manage_files = Blueprint('manage_files', __name__)
 
@@ -14,14 +15,15 @@ def get_rates():
 @manage_files.route('/setRates', methods = ['POST'])
 def set_rates():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		# floaty_dict = {}
-		# for k,v in data.items():
-		# 	floaty_dict[k] = float(v)
-
-		with open('config/costs_rates.json', 'w') as file:
-			file.write(js_dumps(data, indent=4))
-		return 'ok'
+		try:
+			data = request.get_json(force=True)
+			with open('config/costs_rates.json', 'w') as file:
+				file.write(js_dumps(data, indent=4))
+			return data
+		except Exception as e:
+			current_app.logger.exception("[/methods/setRates]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 
@@ -57,30 +59,39 @@ def get_devices_cfg():
 @manage_files.route('/editDevCfg', methods = ['POST'])
 def edit_device_cfg():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		if current_app.sensors.update_device(data['name'], data['cfg']):
-			with open('config/devices.json', 'r+') as devs_file:
-				new_cfg = devs_file.read()
-				devs = js_loads(new_cfg)
-				devs[data['index']] = data['cfg']
-				devs_file.seek(0)
-				devs_file.write(js_dumps(devs, indent=4))
-				devs_file.truncate()
-			print(type(devs), devs)
-			return js_dumps({"result":True, "new_cfg":devs})
-		else:
-			return js_dumps({"result":False})
+		try:
+			data = request.get_json(force=True)
+			if current_app.sensors.update_device(data['name'], data['cfg']):
+				with open('config/devices.json', 'r+') as devs_file:
+					new_cfg = devs_file.read()
+					devs = js_loads(new_cfg)
+					devs[data['index']] = data['cfg']
+					devs_file.seek(0)
+					devs_file.write(js_dumps(devs, indent=4))
+					devs_file.truncate()
+				return js_dumps({"result":True, "new_cfg":devs})
+			else:
+				return js_dumps({"result":False})
+		except Exception as e:
+			current_app.logger.exception("[/methods/editDevCfg]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 
 @manage_files.route('/setParameters', methods = ['POST'])
 def set_parameters():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		with open('config/thresholds.json', 'w') as file:
-			file.write(js_dumps(data, indent=4))
-		current_app.sensors.update_thresholds(data)
-		return 'ok'
+		try:
+			data = request.get_json(force=True)
+			with open('config/thresholds.json', 'w') as file:
+				file.write(js_dumps(data, indent=4))
+			current_app.sensors.update_thresholds(data)
+			return data
+		except Exception as e:
+			current_app.logger.exception("[/methods/setParameters]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 
@@ -101,27 +112,36 @@ def get_light_schedule():
 @manage_files.route('/setLightSchedule', methods = ['POST'])
 def set_light_schedule():
 	if isAuthorized():
-		data = request.get_json(force=True)
-		# TODO some validity check on data
-		with open('config/grow_lights_schedule.json', 'w') as file:
-			file.write(js_dumps(data, indent=4))
-		current_app.sensors.update_lights_schedule(data)
-		return js_dumps({"result":True, "new_rules":data})
+		try:
+			data = request.get_json(force=True)
+			with open('config/grow_lights_schedule.json', 'w') as file:
+				file.write(js_dumps(data, indent=4))
+			current_app.sensors.update_lights_schedule(data)
+			return js_dumps({"result":True, "new_rules":data})
+		except Exception as e:
+			current_app.logger.exception("[/methods/setLightSchedule]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 
 @manage_files.route('/getLastSnapshot', methods = ['GET'])
 def snapshot():
 	if isAuthorized():
-		name = request.args.get("camera_name")
-		snap_dir = current_app.sensors.devices[name].snapshots_dir
-		ph = os.listdir(snap_dir)
-		if ph:
-			ph.sort(reverse=True)
-			last = os.path.join(snap_dir, ph[0])
-			return send_file(last, mimetype='image/jpeg')
-		else:
-			return 'nope'
+		try:
+			name = request.args.get("camera_name")
+			snap_dir = current_app.sensors.devices[name].snapshots_dir
+			ph = os.listdir(snap_dir)
+			if ph:
+				ph.sort(reverse=True)
+				last = os.path.join(snap_dir, ph[0])
+				return send_file(last, mimetype='image/jpeg')
+			else:
+				abort(422)
+		except Exception as e:
+			current_app.logger.exception("[/methods/getLastSnapshot]: {}"
+				.format(traceback.format_exc()))
+			abort(422)
 	else:
 		abort(403)
 

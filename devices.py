@@ -8,6 +8,7 @@ import threading
 import sensors_utils
 import os
 from picamera import PiCamera
+import datetime
 
 class Passive:
 	def __init__(self, name, model, wattage, **kwargs):
@@ -270,22 +271,26 @@ class IP_Camera(Passive):
 		return False
 
 class RPi_Camera(Passive): # should be enabled in raspi-config
-	def __init__(self, name, model, snapshots_dir, rotation, interval=-1, **kwargs):
+	def __init__(self, name, model, snapshots_dir, rotation, interval=-1, width=1280, height=720, **kwargs):
 		super().__init__(name, model, 0)
 		self.snapshots_dir = snapshots_dir
 		self.interval = interval*3600
 		self.timer = sensors_utils.TimerWrap()
 		self.rotation = rotation
+		self.width = width
+		self.height = height
+		self.last_snapshot_ts = None
 		# PiCamera supports several other parameters
 
 	def take_snapshot(self):
 		# I don't expect frequent snapshots and the camera module uses 250mA
 		# so I turn it on and off each time as the doc says
 		with PiCamera() as camera:
+			camera.resolution = (self.width, self.height)
 			camera.rotation = self.rotation
 			time.sleep(1) # camera warm-up
-			timestamp = sensors_utils.get_now().strftime("%Y-%m-%d_%H-%M-%S")
-			filename = os.path.join(self.snapshots_dir, timestamp+'_'+self.name+'.jpg')
+			self.last_snapshot_ts = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+			filename = os.path.join(self.snapshots_dir, self.last_snapshot_ts+'_'+self.name+'.jpg')
 			camera.capture(filename)
 		if self.interval>0: self.timer.start(self.interval, self.take_snapshot)
 
@@ -294,7 +299,7 @@ class RPi_Camera(Passive): # should be enabled in raspi-config
 		self.timer.reset()
 
 	def get_state(self):
-		return super().get_state()+[self.timer.remaining()]
+		return super().get_state()+[self.last_snapshot_ts, self.timer.remaining()]
 
 	def set_state(self, state):
 		return False

@@ -7,13 +7,13 @@ $(document).ready(function(){
 			data: JSON.stringify({ user: $("#user").val(), password:$("#password").val()}),
 			success: function(response) {
 				switch(response['result']) {
-					case '1':
+					case 1:
 						$("#label").text("Wrong username, it must contain only letters and numbers");
 						break;
-					case '2':
+					case 2:
 						$("#label").text("Wrong credentials, try again");
 						break;
-					default:
+					case 0:
 						window.location.href = "/agricoltura";
 				}
 			}

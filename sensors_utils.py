@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from threading import Timer
-from dateutil import tz
+# from dateutil import tz
 import datetime
 import requests
 import time
@@ -16,7 +16,7 @@ class Scheduler: #not used nor tested
 		self.jobs.append([when, what, args, interval])
 
 	def run_pending_jobs(self):
-		now = get_now()
+		now = datetime.datetime.now()
 		for job in self.jobs:
 			if job[0]>=now:
 				job[1](*job[2])
@@ -47,15 +47,15 @@ class TimerWrap:
 		if self.active_since: return self.current_timer.interval - self.elapsed()
 		else: return 0
 
-def get_now():
-	from_zone = tz.gettz('UTC')
-	to_zone = tz.gettz('Europe/Rome')
-	dt = datetime.datetime.now()
-	dt = dt.replace(tzinfo=from_zone)
-	return dt.astimezone(to_zone)
-
 def unix_now(): #milliseconds
 	return int(time.time()*1000)
+
+# def get_now():
+# 	from_zone = tz.gettz('UTC')
+# 	to_zone = tz.gettz('Europe/Rome')
+# 	dt = datetime.datetime.now()
+# 	dt = dt.replace(tzinfo=from_zone)
+# 	return dt.astimezone(to_zone)
 
 def get_today_len(self):
 	response = requests.get('http://api.sunrise-sunset.org/json?lat=41.890184&lng=12.492409')

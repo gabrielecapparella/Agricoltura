@@ -130,11 +130,11 @@
 			</div>
 			{% if devs['cameras'] %}
 			<div class="cards">
-				{% for name in devs['cameras'] %}
+				{% for name, state in devs['cameras'].items() %}
 				<div class="card">
 					<div class="card-title">{{name}}</div>
 					<div class="card-cam-snapshot">
-						<img src="/agricoltura/methods/getLastSnapshot?camera_name={{name}}" class="snapshot" alt="Camera Snapshot">
+						<img src="/agricoltura/methods/getLastSnapshot?camera_name={{name}}&ts={{state[3]}}" class="snapshot" alt="Camera Snapshot">
 					</div>
 				</div>
 				{% endfor %}		

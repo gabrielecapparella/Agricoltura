@@ -193,3 +193,10 @@ tbody tr:hover {
 	display: none;
 	text-align: center;
 }
+
+.form-hint {
+	padding-top: 5px;
+	text-align: center;
+	font-size: 12px;
+	width: 100%;
+}

@@ -112,7 +112,7 @@ class Sensors:
 	def get_active_control(self):
 		return self.active_control
 
-	def set_single_active_control(self, state_index, state):
+	def set_single_active_control(self, state_index: int, state: bool):
 		try:
 			self.active_control[state_index] = state
 			return True
@@ -193,7 +193,6 @@ class Sensors:
 	# if duration < 0 then duration = user_chosen_hours_of_light - today_length
 	# if interval < 0 then the rule is one-time-only
 	def check_lights_schedule(self):
-		if not self.active_control[2]: return
 		try:
 			now = datetime.datetime.now()
 			for job in self.g_lights_schedule: #job = [who, when, duration, interval, enabled]
@@ -211,14 +210,15 @@ class Sensors:
 
 					# if necessary, deploy lights
 					if to_provide>0:
-						for name in job[0].split(','):
+						if job[0]=='*': who = self.enabled_devs["grow_lights"]
+						else: who = job[0].split(',')
+						for name in who:
 							if name in self.enabled_devs['grow_lights']:
 								dev = self.devices[name]
 								self.logger.info("[Sensors.check_lights_schedule]: turning on {} for {} hours"
 									.format(name, job[2]))
 								dev.on_for_x_min(job[2]*60, self.grow_light_callback)
 						if job[3].total_seconds()>0: job[1]+=job[3]
-			self.write_lights_schedule()
 		except Exception as e:
 			self.logger.warning("[Sensors.check_lights_schedule]: something bad happened\n\n{}"
 				.format(traceback.format_exc()))
@@ -395,8 +395,9 @@ class Sensors:
 					self.state[2] = False
 
 			#grow_lights
-			self.check_lights_schedule()
-			self.write_lights_schedule()
+			if self.active_control[2]:
+				self.check_lights_schedule()
+				self.write_lights_schedule()
 
 			#irrigation
 			if self.active_control[3]:
@@ -414,7 +415,7 @@ class Sensors:
 		except Exception as e:
 			self.logger.exception("[Sensors.operate]: {}".format(traceback.format_exc()))
 
-	def delete_device(self, name, cfg):
+	def delete_device(self, name: str, cfg: dict):
 		try:
 			dev_type = cfg['model'].split('__')[0]
 			if name in self.devices:
@@ -431,6 +432,9 @@ class Sensors:
 
 	def add_device(self, dev: dict):
 		try:
+			if dev['name'] in self.devices:
+				raise ValueError("Duplicate device name '{}'".format(dev['name']))
+
 			if dev['model'] == 'soil_moist_sensors__generic_analog':
 				self.devices[dev['name']] = devs.SoilMoistureSensor(adc=self.adc, **dev)
 
@@ -479,7 +483,6 @@ class Sensors:
 			if devs==None: # tests use empty string
 				with open('config/devices.json', 'r') as devs_file:
 					devs = json.loads(devs_file.read())
-
 			for device in devs:
 				self.add_device(device)
 		except Exception as e:

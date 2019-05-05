@@ -11,10 +11,21 @@ import traceback
 
 sensors_api = Blueprint('sensors_api', __name__)
 
-@sensors_api.route('/getFullState')
+@sensors_api.route('/getLastReading', methods=['GET', 'POST'])
+def get_last_reading():
+	if isAuthorized():
+		last_reading = current_app.db.get_last_reading()
+		return js_dumps(last_reading)
+	else:
+		abort(403)
+
+@sensors_api.route('/getFullState', methods=['GET', 'POST'])
 def get_full_state():
-	state = current_app.sensors.get_full_state()
-	return js_dumps(state)
+	if isAuthorized():
+		state = current_app.sensors.get_full_state()
+		return js_dumps(state)
+	else:
+		abort(403)
 
 @sensors_api.route('/setActuator', methods = ['POST'])
 def set_actuator():
@@ -25,6 +36,16 @@ def set_actuator():
 		new_state = current_app.sensors.get_dev_state(data['name'])
 		if not isinstance(new_state, list): new_state = [new_state]
 		return js_dumps(new_state)
+	else:
+		abort(403)
+
+@sensors_api.route('/getActuator', methods = ['POST'])
+def get_actuator():
+	if isAuthorized():
+		data = request.get_json(force=True)
+		state = current_app.sensors.get_dev_state(data['name'])
+		if not isinstance(state, list): state = [state]
+		return js_dumps(state)
 	else:
 		abort(403)
 
@@ -79,15 +100,15 @@ def get_costs():
 	else:
  		abort(403)
 
-@sensors_api.route('/getTempHistory')
+@sensors_api.route('/getTempHistory', methods=['GET', 'POST'])
 def get_temp_history():
 	return js_dumps(current_app.db.get_readings(what='datetime, temperature'))
 
-@sensors_api.route('/getHumHistory')
+@sensors_api.route('/getHumHistory', methods=['GET', 'POST'])
 def get_hum_history():
 	return js_dumps(current_app.db.get_readings(what='datetime, humidity'))
 
-@sensors_api.route('/getMoistHistory')
+@sensors_api.route('/getMoistHistory', methods=['GET', 'POST'])
 def get_moist_history():
 	return js_dumps(current_app.db.get_readings(what='datetime, moisture'))
 
@@ -123,7 +144,7 @@ def export_actuators():
 	else:
 		abort(403)
 
-@sensors_api.route('/getSystemStatus')
+@sensors_api.route('/getSystemStatus', methods=['GET', 'POST'])
 def get_system_status():
 	if isAdmin():
 		return js_dumps(sys_status())

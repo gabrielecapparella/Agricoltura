@@ -242,7 +242,7 @@ class DB_Connection:
 def datetime2unix(dt):
 	return int(time.mktime(dt.timetuple())*1000)
 
-def setup_db(user, password, database):
+def setup_db(user, password, database, autocommit=True):
 	admin_pwd = 'raspberry314'
 
 	table_sensors = (

@@ -5,7 +5,7 @@ import db_utils
 from db_utils import datetime2unix as d2u
 from datetime import datetime as dt
 
-#python3 -m unittest -v db_utils_test.py
+#venv-agricoltura/bin/python3 -m unittest -v db_utils_test.py
 class db_utils_test(unittest.TestCase):
 
 	def setUp(self):

@@ -89,7 +89,7 @@ def forbidden(e):
 
 try:
 	setup()
-	if __name__ == '__main__': master.run(host='0.0.0.0')
+	if __name__ == '__main__': master.run(host='0.0.0.0', port=80)
 except Exception as e:
 	master.logger.exception(e)
 	clean_up()

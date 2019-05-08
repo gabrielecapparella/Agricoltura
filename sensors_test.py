@@ -5,7 +5,7 @@ from sensors import Sensors
 from time import sleep
 from datetime import datetime, timedelta
 
-# python3 -m unittest -v sensors_test.py
+# venv-agricoltura/bin/python3 -m unittest -v sensors_test.py
 # these are not unit tests, I want to test for collateral effects too
 class sensor_test(unittest.TestCase):
 
@@ -183,17 +183,8 @@ class sensor_test(unittest.TestCase):
 		self.sensors.check_lights_schedule()
 		self.assertFalse(self.sensors.get_dev_state("led_light_50W"))
 
-		# simple job, activity expected
+		# simple job, no activity expected because when is too old
 		self.sensors.update_lights_schedule([["led_light_50W", "1983-03-21 00:00", 0.001, 1, True]]) # 0.001h = 3.6s
 		self.sensors.check_lights_schedule()
-		self.assertTrue(self.sensors.get_dev_state("led_light_50W"))
-		sleep(4)
 		self.assertFalse(self.sensors.get_dev_state("led_light_50W"))
-		expected_job = [
-			"led_light_50W",
-			datetime.strptime("1983-03-21 01:00", '%Y-%m-%d %H:%M'),
-			0.001,
-			timedelta(hours=1),
-			True
-		]
-		self.assertEqual(self.sensors.g_lights_schedule[0], expected_job)
+

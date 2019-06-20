@@ -97,7 +97,6 @@ class Irrigation(Switch):
 			self.watering_state = 0
 			if self.callback: self.callback(self)
 
-
 class Fan(Switch):
 	def __init__(self, name, model, power_pin, speed_pin, wattage, pwm_frequency=25000, **kwargs):
 		super().__init__(name, model, power_pin, wattage)

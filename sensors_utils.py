@@ -50,12 +50,12 @@ class TimerWrap:
 def unix_now(): #milliseconds
 	return int(time.time()*1000)
 
-# def get_now():
-# 	from_zone = tz.gettz('UTC')
-# 	to_zone = tz.gettz('Europe/Rome')
-# 	dt = datetime.datetime.now()
-# 	dt = dt.replace(tzinfo=from_zone)
-# 	return dt.astimezone(to_zone)
+def get_now():
+	from_zone = tz.gettz('UTC')
+	to_zone = tz.gettz('Europe/Rome')
+	dt = datetime.datetime.now()
+	dt = dt.replace(tzinfo=from_zone)
+	return dt.astimezone(to_zone)
 
 def get_today_len(self):
 	response = requests.get('http://api.sunrise-sunset.org/json?lat=41.890184&lng=12.492409')

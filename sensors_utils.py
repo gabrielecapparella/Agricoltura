@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from threading import Timer
-# from dateutil import tz
+from dateutil import tz
 import datetime
 import requests
 import time
@@ -57,7 +57,7 @@ def get_now():
 	dt = dt.replace(tzinfo=from_zone)
 	return dt.astimezone(to_zone)
 
-def get_today_len(self):
+def get_today_len():
 	response = requests.get('http://api.sunrise-sunset.org/json?lat=41.890184&lng=12.492409')
 	hms = response.json()['results']['day_length'].split(':')
 	return round(int(hms[0])+int(hms[1])/60, 1)

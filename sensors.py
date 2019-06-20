@@ -149,7 +149,7 @@ class Sensors:
 					act_state[name] = self.devices[name].get_state()
 			else: act_state = self.devices[who].get_state()
 		except Exception as e:
-			self.logger.warning("[Sensors.get_dev_state]: something bad happened, what='{}' state='{}'\n\n{}"
+			self.logger.warning("[Sensors.get_dev_state]: something bad happened, who='{}'\n\n{}"
 				.format(who, traceback.format_exc()))
 		finally:
 			return act_state
@@ -200,7 +200,7 @@ class Sensors:
 				if diff>=0 and job[4]:
 					# compute how many h are to be provided
 					if job[2]<0: # additional hours of light
-						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_day_len()
+						to_provide = self.thresholds['min_light_hours']-sensors_utils.get_today_len()
 					else: # static rule
 						to_provide = job[2]
 

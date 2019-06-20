@@ -22,7 +22,7 @@ master.register_blueprint(flask_files.manage_files, url_prefix='/agricoltura/met
 master.register_blueprint(flask_sensors.sensors_api, url_prefix='/agricoltura/methods')
 
 def setup():
-	global master, sigint_handler, sigterm_handler
+	global master
 
 	master.config['TEMPLATES_AUTO_RELOAD'] = True
 

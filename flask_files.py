@@ -87,7 +87,7 @@ def set_parameters():
 			with open('config/thresholds.json', 'w') as file:
 				file.write(js_dumps(data, indent=4))
 			current_app.sensors.update_thresholds(data)
-			return data
+			return js_dumps(data)
 		except Exception as e:
 			current_app.logger.exception("[/methods/setParameters]: {}"
 				.format(traceback.format_exc()))
